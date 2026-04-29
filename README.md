@@ -1,2 +1,2 @@
 # Noko-RNG
-a slop rng game that i made at school! (not finished)
+a improved version of the original beff rng
