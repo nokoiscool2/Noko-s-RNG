@@ -954,6 +954,11 @@ body.biome-active #app { animation: biomeBorderPulse 3s ease-in-out infinite; }
   50%     { letter-spacing:0.55em; filter:drop-shadow(0 0 60px #ffffff) drop-shadow(0 0 120px #e8e0ff); opacity:1; }
 }
 
+@keyframes absoluteNamePulse {
+  0%,100% { filter: drop-shadow(0 0 40px currentColor) drop-shadow(0 0 80px white); opacity: 0.88; }
+  50%     { filter: drop-shadow(0 0 70px currentColor) drop-shadow(0 0 140px white) drop-shadow(0 0 280px currentColor); opacity: 1; }
+}
+
 /* ── OPENING ANIMATION OVERLAY ── */
 #reveal-overlay {
   position: fixed; inset: 0; z-index: 9000; pointer-events: none;
@@ -1278,6 +1283,290 @@ body.biome-active #app { animation: biomeBorderPulse 3s ease-in-out infinite; }
 @keyframes flashOut {
   from { opacity: var(--fl-op, 0.8); }
   to   { opacity: 0; }
+}
+
+/* ── ETERNAL CINEMATIC ── */
+.eternal-fire-column {
+  position: absolute;
+  bottom: 0;
+  width: 60px;
+  background: linear-gradient(to top, #ff0000, #ff4500, #ff6b00, transparent);
+  border-radius: 50% 50% 0 0;
+  opacity: 0;
+  animation: fireColumnRise var(--fc-dur, 2s) ease-out forwards var(--fc-delay, 0s);
+  filter: blur(8px);
+}
+@keyframes fireColumnRise {
+  0%   { opacity: 0; height: 0; transform: scaleX(1); }
+  20%  { opacity: 0.9; }
+  60%  { opacity: 0.7; height: var(--fc-h, 60vh); transform: scaleX(1.2); }
+  100% { opacity: 0; height: var(--fc-h, 60vh); transform: scaleX(0.8); }
+}
+
+.eternal-screen-tear {
+  position: absolute;
+  left: 0; right: 0;
+  height: var(--tear-h, 4px);
+  top: var(--tear-y, 50%);
+  animation: screenTear var(--tear-dur, 0.5s) steps(1) forwards var(--tear-delay, 0s);
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+@keyframes screenTear {
+  0%,100% { opacity: 0; transform: translateX(0); }
+  10%     { opacity: 1; transform: translateX(-30px); }
+  20%     { opacity: 0.8; transform: translateX(15px); }
+  30%     { opacity: 1; transform: translateX(-8px); }
+  40%     { opacity: 0.6; transform: translateX(22px); }
+  50%     { opacity: 1; transform: translateX(-5px); }
+  60%     { opacity: 0.5; transform: translateX(10px); }
+  70%     { opacity: 0; }
+}
+
+.eternal-ember-burst {
+  position: absolute;
+  border-radius: 50%;
+  animation: emberFloat var(--eb-dur, 3s) ease-out forwards var(--eb-delay, 0s);
+  opacity: 0;
+  filter: blur(1px);
+}
+@keyframes emberFloat {
+  0%   { opacity: 0; transform: translate(0, 0) scale(1); }
+  15%  { opacity: 1; }
+  80%  { opacity: 0.6; transform: translate(var(--eb-x, 0px), var(--eb-y, -120px)) scale(0.4); }
+  100% { opacity: 0; transform: translate(var(--eb-x, 0px), var(--eb-y, -150px)) scale(0.1); }
+}
+
+.eternal-title-reveal {
+  position: absolute;
+  left: 50%; top: 30%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 10;
+  opacity: 0;
+  animation: eternalTitleIn var(--et-dur, 3s) ease forwards var(--et-delay, 0s);
+  white-space: nowrap;
+}
+@keyframes eternalTitleIn {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.3) rotateX(60deg); filter: blur(30px); }
+  20%  { opacity: 0.8; transform: translateX(-50%) scale(1.15) rotateX(0deg); filter: blur(0); }
+  50%  { opacity: 1; transform: translateX(-50%) scale(1.0); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) scale(1.1); filter: blur(5px); }
+}
+
+.eternal-name-reveal {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 10;
+  opacity: 0;
+  animation: eternalNameIn var(--en-dur, 8s) ease forwards var(--en-delay, 0s);
+  white-space: nowrap;
+}
+@keyframes eternalNameIn {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.1); filter: blur(40px); }
+  10%  { opacity: 1; transform: translate(-50%, -50%) scale(1.3); filter: blur(0); }
+  20%  { transform: translate(-50%, -50%) scale(1.0); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  90%  { opacity: 0.5; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); filter: blur(8px); }
+}
+
+.eternal-heat-distort {
+  position: absolute; inset: 0;
+  animation: heatWave 0.12s steps(2) infinite var(--hd-delay, 0s);
+  pointer-events: none;
+  opacity: 0;
+}
+@keyframes heatWave {
+  0%   { opacity: 0; filter: url(#heat); transform: skewX(0deg); }
+  25%  { opacity: 1; filter: url(#heat); transform: skewX(0.3deg); }
+  50%  { opacity: 0.8; transform: skewX(-0.2deg); }
+  75%  { opacity: 1; transform: skewX(0.1deg); }
+  100% { opacity: 0; }
+}
+
+.eternal-chroma-tear {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.eternal-rgb-slice {
+  position: absolute; left: 0; right: 0;
+  animation: rgbSlice var(--rs-dur, 3s) steps(1) forwards var(--rs-delay, 0s);
+  opacity: 0; mix-blend-mode: screen;
+}
+@keyframes rgbSlice {
+  0%,100% { opacity: 0; transform: translateX(0); }
+  5%  { opacity: 0.8; transform: translateX(-20px); background: rgba(255,0,0,0.4); }
+  10% { opacity: 0.6; transform: translateX(15px); background: rgba(0,0,255,0.3); }
+  15% { opacity: 0.9; transform: translateX(-8px); background: rgba(255,58,0,0.5); }
+  20% { opacity: 0; transform: translateX(0); }
+  45% { opacity: 0.7; transform: translateX(-12px); background: rgba(255,0,0,0.3); }
+  50% { opacity: 0; }
+  75% { opacity: 0.5; transform: translateX(8px); background: rgba(0,100,255,0.25); }
+  80% { opacity: 0; }
+}
+
+/* ── ABSOLUTE CINEMATIC ── */
+.absolute-reality-crack {
+  position: absolute; left: 50%; top: 50%;
+  width: var(--arc-w, 3px);
+  height: 0;
+  transform-origin: top center;
+  transform: rotate(var(--arc-angle, 0deg));
+  animation: realityCrack var(--arc-dur, 1.5s) ease-out forwards var(--arc-delay, 0s);
+  opacity: 0;
+  border-radius: 2px;
+}
+@keyframes realityCrack {
+  0%   { opacity: 0; height: 0; }
+  10%  { opacity: 1; }
+  30%  { height: var(--arc-len, 200px); opacity: 0.9; }
+  70%  { opacity: 0.6; }
+  100% { opacity: 0; height: var(--arc-len, 200px); }
+}
+
+.absolute-singularity {
+  position: absolute; left: 50%; top: 50%;
+  width: 0; height: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: singularityCollapse var(--sc-dur, 2s) cubic-bezier(0.9,0,1,0.5) forwards var(--sc-delay, 0s);
+  opacity: 0;
+}
+@keyframes singularityCollapse {
+  0%   { width: 300vw; height: 300vh; opacity: 0; filter: brightness(0.2); }
+  30%  { opacity: 0.8; filter: brightness(0.5); }
+  80%  { width: 4px; height: 4px; opacity: 1; filter: brightness(10); }
+  100% { width: 0; height: 0; opacity: 0; filter: brightness(20); }
+}
+
+.absolute-event-horizon {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  animation: eventHorizon var(--eh-dur, 3s) ease forwards var(--eh-delay, 0s);
+  opacity: 0;
+}
+@keyframes eventHorizon {
+  0%   { opacity: 0; width: 4px; height: 4px; box-shadow: 0 0 0 0 white; }
+  10%  { opacity: 1; }
+  30%  { width: 80px; height: 80px; box-shadow: 0 0 60px 40px white, 0 0 120px 80px #e8e0ff; }
+  60%  { opacity: 0.8; }
+  100% { opacity: 0; width: 300vw; height: 300vw; box-shadow: 0 0 200px 100px rgba(232,224,255,0.1); }
+}
+
+.absolute-whiteout-phase {
+  position: absolute; inset: 0;
+  background: white;
+  opacity: 0;
+  animation: absoluteWhitePhase var(--awp-dur, 4s) ease-in-out forwards var(--awp-delay, 0s);
+}
+@keyframes absoluteWhitePhase {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  50%  { opacity: 1; }
+  85%  { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+.absolute-geometry {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: geometryReveal var(--geo-dur, 8s) ease forwards var(--geo-delay, 0s);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 0 20px rgba(255,255,255,0.4), 0 0 60px rgba(232,224,255,0.3);
+}
+@keyframes geometryReveal {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(0deg); }
+  10%  { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1) rotate(15deg); }
+  30%  { opacity: 0.6; transform: translate(-50%, -50%) scale(1.0) rotate(30deg); }
+  70%  { opacity: 0.4; transform: translate(-50%, -50%) scale(1.05) rotate(60deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3) rotate(90deg); }
+}
+
+.absolute-cosmic-grid {
+  position: absolute; inset: 0;
+  opacity: 0;
+  animation: cosmicGrid var(--cg-dur, 10s) ease forwards var(--cg-delay, 0s);
+  background-image:
+    linear-gradient(rgba(232,224,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232,224,255,0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+  perspective: 800px;
+}
+@keyframes cosmicGrid {
+  0%   { opacity: 0; transform: perspective(800px) rotateX(80deg) translateY(200px); }
+  20%  { opacity: 0.5; transform: perspective(800px) rotateX(40deg) translateY(100px); }
+  50%  { opacity: 0.3; transform: perspective(800px) rotateX(20deg) translateY(0px); }
+  80%  { opacity: 0.2; }
+  100% { opacity: 0; transform: perspective(800px) rotateX(0deg); }
+}
+
+.absolute-name-wrap {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 20;
+  opacity: 0;
+  animation: absoluteNameReveal var(--anr-dur, 15s) ease forwards var(--anr-delay, 0s);
+}
+@keyframes absoluteNameReveal {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0); filter: blur(80px); }
+  5%   { opacity: 0; }
+  10%  { opacity: 0.3; transform: translate(-50%, -50%) scale(0.5); filter: blur(20px); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); filter: blur(0); }
+  30%  { transform: translate(-50%, -50%) scale(1.0); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  85%  { opacity: 0.6; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); filter: blur(20px); }
+}
+
+.absolute-divinity-beam {
+  position: absolute; left: 50%; top: 0;
+  width: var(--db-w, 3px);
+  height: 100%;
+  transform: translateX(-50%) rotate(var(--db-angle, 0deg));
+  transform-origin: 50% 50%;
+  animation: divinityBeam var(--db-dur, 12s) ease-in-out forwards var(--db-delay, 0s);
+  opacity: 0;
+  background: linear-gradient(to bottom, transparent, white, rgba(232,224,255,0.8), white, transparent);
+  filter: blur(var(--db-blur, 2px));
+}
+@keyframes divinityBeam {
+  0%   { opacity: 0; transform: translateX(-50%) rotate(var(--db-angle, 0deg)) scaleY(0); }
+  5%   { opacity: 0.4; transform: translateX(-50%) rotate(var(--db-angle, 0deg)) scaleY(1); }
+  20%  { opacity: 0.6; }
+  70%  { opacity: 0.3; }
+  90%  { opacity: 0.1; }
+  100% { opacity: 0; }
+}
+
+.absolute-particle-field {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+
+.absolute-subtitle {
+  position: absolute;
+  left: 50%; top: 38%;
+  transform: translateX(-50%);
+  font-family: 'Cinzel', serif;
+  font-size: clamp(0.6rem, 1.2vw, 0.85rem);
+  letter-spacing: 0.7em;
+  text-transform: uppercase;
+  color: white;
+  opacity: 0;
+  white-space: nowrap;
+  animation: subtitleFade var(--sf-dur, 10s) ease forwards var(--sf-delay, 0s);
+  z-index: 19;
+}
+@keyframes subtitleFade {
+  0%   { opacity: 0; letter-spacing: 1.5em; filter: blur(10px); }
+  10%  { opacity: 0.7; letter-spacing: 0.7em; filter: blur(0); }
+  60%  { opacity: 0.5; }
+  100% { opacity: 0; letter-spacing: 0.4em; }
 }
 
 /* ── DEV MODE ── */
@@ -2262,7 +2551,7 @@ function triggerOpeningAnim(r) {
   }
 
   // Clean up after animation
-  const dur = tierIdx >= 12 ? 12000 : tierIdx >= 11 ? 9000 : tierIdx >= 10 ? 6500 : tierIdx >= 9 ? 5800 : tierIdx >= 7 ? 5000 : tierIdx >= 5 ? 4200 : 3500;
+  const dur = tierIdx >= 12 ? 59000 : tierIdx === 11 ? 48000 : tierIdx >= 10 ? 25000 : tierIdx >= 9 ? 5800 : tierIdx >= 7 ? 5000 : tierIdx >= 5 ? 4200 : 3500;
   setTimeout(() => {
     ov.innerHTML = '';
     ov.className = '';
@@ -2451,234 +2740,616 @@ function triggerTranscendentAnim(ov, r, fontClass) {
 }
 
 function triggerPrimordialAnim(ov, r, fontClass) {
-  ov.appendChild(makeBackdrop('5.0s'));
+  const TOTAL = 25000;
+  const rgb = hexToRgb(r.color);
 
-  // Glitch bars
-  const glitch = document.createElement('div');
-  glitch.className = 'reveal-glitch';
-  glitch.style.color = r.color;
-  const barCount = 20;
-  for (let i = 0; i < barCount; i++) {
-    const bar = document.createElement('div');
-    bar.className = 'glitch-bar';
-    bar.style.top = (Math.random() * 100) + '%';
-    bar.style.background = r.color;
-    bar.style.height = (1 + Math.random() * 5) + 'px';
-    bar.style.animationDelay = (Math.random() * 0.8) + 's';
-    bar.style.animationDuration = (0.8 + Math.random() * 0.8) + 's';
-    glitch.appendChild(bar);
+  // Single fullscreen canvas — draws everything
+  const cv = document.createElement('canvas');
+  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+  ov.appendChild(cv);
+
+  // Name + title text overlay on top
+  const textWrap = document.createElement('div');
+  textWrap.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:10;pointer-events:none;opacity:0;transition:opacity 1.5s ease;';
+  const auraTitle = AURA_TITLES[r.name];
+  textWrap.innerHTML = `
+    ${auraTitle ? `<div style="font-family:'Cinzel',serif;font-size:clamp(0.55rem,1.2vw,0.8rem);letter-spacing:0.55em;text-transform:uppercase;color:${r.color};margin-bottom:1.2rem;opacity:0.85;">${auraTitle}</div>` : ''}
+    <div class="reveal-aura-name ${fontClass}" style="color:${r.color};font-size:clamp(2.4rem,8vw,5.5rem);filter:drop-shadow(0 0 30px ${r.color}) drop-shadow(0 0 60px #ff0080);">
+      ${r.name}${r.gilded ? '<br><span style="font-size:0.32em;color:#f0c060;letter-spacing:0.4em;font-family:Cinzel,serif">✦ GILDED ✦</span>' : ''}
+    </div>`;
+  ov.appendChild(textWrap);
+  setTimeout(() => textWrap.style.opacity = '1', 10000);
+  setTimeout(() => textWrap.style.opacity = '0', TOTAL - 2000);
+
+  // Particle system
+  const particles = [];
+  const shockwaves = [];
+  const cracks = [];
+  let t = 0;
+  let raf;
+
+  // Seed particles
+  function seedParticles(W, H) {
+    particles.length = 0;
+    const cx = W/2, cy = H/2;
+    for (let i = 0; i < 180; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.4 + Math.random() * 2.5;
+      particles.push({
+        x: cx + (Math.random()-0.5)*20,
+        y: cy + (Math.random()-0.5)*20,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed * 0.5,
+        size: 1 + Math.random() * 3.5,
+        life: 0, maxLife: 3 + Math.random() * 8,
+        col: Math.random() < 0.5 ? r.color : '#ff0080',
+        orbit: Math.random() < 0.4,
+        orbitR: 40 + Math.random() * 180,
+        orbitA: Math.random() * Math.PI * 2,
+        orbitSpeed: (Math.random()-0.5) * 0.04,
+      });
+    }
   }
-  ov.appendChild(glitch);
 
-  // Cosmic vortex
-  const vortex = document.createElement('div');
-  vortex.className = 'reveal-vortex';
-  vortex.style.background = `radial-gradient(circle, white 0%, ${r.color} 20%, #ff0080 40%, transparent 65%)`;
-  vortex.style.boxShadow = `0 0 80px 40px ${r.color}`;
-  ov.appendChild(vortex);
-
-  // Multiple staggered cracks
-  const crackContainer = document.createElement('div');
-  crackContainer.className = 'reveal-cracks';
-  for (let i = 0; i < 16; i++) {
-    const crack = document.createElement('div');
-    crack.className = 'crack-line';
-    crack.style.background = `linear-gradient(to bottom, ${r.color}, #ff0080, transparent)`;
-    crack.style.boxShadow = `0 0 12px ${r.color}`;
-    crack.style.transform = `rotate(${(i / 16) * 360 + Math.random()*10}deg)`;
-    crack.style.animationDelay = (0.3 + Math.random() * 0.5) + 's';
-    crackContainer.appendChild(crack);
-  }
-  ov.appendChild(crackContainer);
-
-  // Multiple flashes
-  for (let i = 0; i < 5; i++) {
-    const fl = document.createElement('div');
-    fl.className = 'reveal-flash';
-    fl.style.setProperty('--fl-op', (1 - i * 0.15).toString());
-    fl.style.setProperty('--fl-dur', '0.2s');
-    fl.style.animationDelay = (i * 0.12) + 's';
-    ov.appendChild(fl);
+  // Spawn shockwave
+  function spawnShock(col, W, H) {
+    shockwaves.push({ r: 0, maxR: Math.sqrt(W*W+H*H)*0.7, col, life: 1, speed: 12 + Math.random()*8, width: 2 + Math.random()*4 });
   }
 
-  ov.appendChild(makeRevealText(r, fontClass, '1.0s', '4.5s'));
+  // Spawn crack burst
+  function spawnCracks(cx, cy, col, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = (i/count)*Math.PI*2 + Math.random()*0.3;
+      cracks.push({ x: cx, y: cy, angle, len: 0, maxLen: 120+Math.random()*300, col, life: 1, speed: 18+Math.random()*20 });
+    }
+  }
+
+  // Scheduled events
+  const events = [
+    { at: 0.3,  fn: (W,H) => { spawnShock(r.color, W, H); spawnCracks(W/2,H/2,r.color,8); } },
+    { at: 0.8,  fn: (W,H) => { spawnShock('#ffffff', W, H); spawnCracks(W/2,H/2,'#ff0080',12); } },
+    { at: 1.4,  fn: (W,H) => { spawnShock(r.color, W, H); spawnShock('#ff0080', W, H); } },
+    { at: 2.2,  fn: (W,H) => { spawnShock('#ff0080', W, H); spawnCracks(W/2,H/2,r.color,16); } },
+    { at: 3.5,  fn: (W,H) => { spawnShock('#ffffff', W, H); spawnCracks(W/2,H/2,'#ffffff',20); } },
+    { at: 5.0,  fn: (W,H) => { spawnShock(r.color, W, H); } },
+    { at: 7.0,  fn: (W,H) => { spawnShock('#ff0080', W, H); spawnCracks(W/2,H/2,r.color,24); } },
+    { at: 9.5,  fn: (W,H) => { spawnShock('#ffffff', W, H); spawnShock(r.color, W, H); } },
+    { at: 12.0, fn: (W,H) => { spawnShock(r.color, W, H); } },
+    { at: 15.0, fn: (W,H) => { spawnShock('#ff0080', W, H); } },
+    { at: 19.0, fn: (W,H) => { spawnShock('#ffffff', W, H); } },
+  ];
+  let firedEvents = new Set();
+
+  function loop() {
+    const W = window.innerWidth, H = window.innerHeight;
+    cv.width = W; cv.height = H;
+    const cx = W/2, cy = H/2;
+    const ctx = cv.getContext('2d');
+
+    if (particles.length === 0) seedParticles(W, H);
+
+    // Fire scheduled events
+    events.forEach((ev, idx) => {
+      if (!firedEvents.has(idx) && t >= ev.at) { firedEvents.add(idx); ev.fn(W, H); }
+    });
+
+    // Background — deep void
+    const bgAlpha = Math.min(0.88, t * 0.6);
+    ctx.fillStyle = `rgba(2,1,10,${bgAlpha})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // Atmospheric glow at center
+    const glowPulse = 0.5 + 0.5 * Math.sin(t * 2.2);
+    const glowR = 80 + glowPulse * 60;
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR * 3);
+    grd.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},${0.18 * glowPulse})`);
+    grd.addColorStop(0.4, `rgba(255,0,128,${0.08 * glowPulse})`);
+    grd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(cx, cy, glowR * 3, 0, Math.PI*2);
+    ctx.fillStyle = grd; ctx.fill();
+
+    // Draw cracks
+    cracks.forEach((c, i) => {
+      c.len = Math.min(c.maxLen, c.len + c.speed);
+      c.life -= 0.008;
+      if (c.life <= 0) { cracks.splice(i, 1); return; }
+      const ex = c.x + Math.cos(c.angle) * c.len;
+      const ey = c.y + Math.sin(c.angle) * c.len;
+      const crackRgb = hexToRgb(c.col);
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(ex, ey);
+      ctx.strokeStyle = `rgba(${crackRgb.r},${crackRgb.g},${crackRgb.b},${c.life * 0.9})`;
+      ctx.lineWidth = c.life * 2.5;
+      ctx.shadowColor = c.col; ctx.shadowBlur = 12;
+      ctx.stroke(); ctx.shadowBlur = 0;
+    });
+
+    // Draw shockwaves
+    shockwaves.forEach((sw, i) => {
+      sw.r += sw.speed;
+      sw.life = Math.max(0, 1 - sw.r / sw.maxR);
+      const swRgb = hexToRgb(sw.col);
+      ctx.beginPath(); ctx.arc(cx, cy, Math.max(0, sw.r), 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(${swRgb.r},${swRgb.g},${swRgb.b},${sw.life * 0.85})`;
+      ctx.lineWidth = sw.width * sw.life;
+      ctx.shadowColor = sw.col; ctx.shadowBlur = 18 * sw.life;
+      ctx.stroke(); ctx.shadowBlur = 0;
+      if (sw.r >= sw.maxR) shockwaves.splice(i, 1);
+    });
+
+    // Orbiting + floating particles
+    particles.forEach((p, i) => {
+      p.life += 0.016;
+      if (p.life >= p.maxLife) {
+        // respawn
+        const angle2 = Math.random() * Math.PI * 2;
+        const speed2 = 0.3 + Math.random() * 2;
+        p.x = cx + (Math.random()-0.5)*30; p.y = cy + (Math.random()-0.5)*30;
+        p.vx = Math.cos(angle2)*speed2; p.vy = Math.sin(angle2)*speed2*0.5;
+        p.life = 0; p.maxLife = 2 + Math.random()*7;
+        p.col = Math.random()<0.5 ? r.color : '#ff0080';
+        return;
+      }
+      if (p.orbit) {
+        p.orbitA += p.orbitSpeed;
+        p.x += (cx + Math.cos(p.orbitA)*p.orbitR - p.x) * 0.04;
+        p.y += (cy + Math.sin(p.orbitA)*p.orbitR*0.4 - p.y) * 0.04;
+      } else {
+        p.x += p.vx; p.y += p.vy;
+        p.vx *= 0.99; p.vy *= 0.99;
+      }
+      const fade = Math.sin((p.life / p.maxLife) * Math.PI);
+      const pRgb = hexToRgb(p.col);
+      const ps = Math.max(0, p.size * fade);
+      ctx.beginPath(); ctx.arc(p.x, p.y, ps, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${pRgb.r},${pRgb.g},${pRgb.b},${fade * 0.9})`;
+      ctx.shadowColor = p.col; ctx.shadowBlur = ps * 3;
+      ctx.fill(); ctx.shadowBlur = 0;
+    });
+
+    // Twin helix spirals (starts at t=2)
+    if (t > 2) {
+      const helixAlpha = Math.min(0.85, (t - 2) * 0.3);
+      for (let strand = 0; strand < 2; strand++) {
+        const phOff = strand * Math.PI;
+        ctx.beginPath();
+        for (let i = 0; i <= 160; i++) {
+          const frac = i / 160;
+          const ang = frac * Math.PI * 5 + t * 0.8 + phOff;
+          const rad = frac * Math.min(W, H) * 0.38 * Math.sin(frac * Math.PI);
+          const px2 = cx + Math.cos(ang) * rad;
+          const py2 = cy + Math.sin(ang) * rad * 0.35;
+          if (i === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+        }
+        ctx.strokeStyle = strand===0
+          ? `rgba(${rgb.r},${rgb.g},${rgb.b},${helixAlpha})`
+          : `rgba(255,0,128,${helixAlpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.shadowColor = strand===0 ? r.color : '#ff0080';
+        ctx.shadowBlur = 10;
+        ctx.stroke(); ctx.shadowBlur = 0;
+      }
+    }
+
+    t += 0.016;
+    raf = requestAnimationFrame(loop);
+  }
+  loop();
+  setTimeout(() => { cancelAnimationFrame(raf); }, TOTAL + 200);
 }
 
 function triggerEternalAnim(ov, r, fontClass) {
-  ov.appendChild(makeBackdrop('6.0s'));
-
-  // Scanline time-freeze effect
+  // ── PHASE 1 (0-4s): The world tears apart ──────────────────────────────────
+  // Initial scanline freeze
   const freeze = document.createElement('div');
   freeze.className = 'reveal-timefreeze';
-  freeze.style.animationDuration = '0.08s';
+  freeze.style.animationDuration = '0.06s';
   ov.appendChild(freeze);
-  setTimeout(() => freeze.remove(), 1200);
+  setTimeout(() => freeze.style.opacity = '0', 2500);
+  setTimeout(() => freeze.remove(), 3000);
 
-  // Chromatic aberration layers
-  const chroma = document.createElement('div');
-  chroma.className = 'reveal-chroma';
-  const offsets = [
-    {x:'6px',y:'0px',color:'rgba(255,0,0,0.5)',delay:'0.1s'},
-    {x:'-6px',y:'0px',color:'rgba(0,255,255,0.5)',delay:'0.15s'},
-    {x:'0px',y:'4px',color:'rgba(255,58,0,0.3)',delay:'0.2s'},
-  ];
-  offsets.forEach(o => {
-    const cl = document.createElement('div');
-    cl.className = 'chroma-layer';
-    cl.style.background = o.color;
-    cl.style.setProperty('--ch-x', o.x);
-    cl.style.setProperty('--ch-y', o.y);
-    cl.style.setProperty('--ch-delay', o.delay);
-    cl.style.setProperty('--ch-dur', '2.5s');
-    chroma.appendChild(cl);
-  });
-  ov.appendChild(chroma);
+  // Dark backdrop fades in slowly over the full duration
+  const bd = document.createElement('div');
+  bd.className = 'reveal-backdrop';
+  bd.style.setProperty('--bd-dur', '48s');
+  ov.appendChild(bd);
 
-  // Spiral arms radiating outward
-  const armCount = 24;
+  // Chromatic tear — slices of screen displaced in RGB
+  const tearContainer = document.createElement('div');
+  tearContainer.className = 'eternal-chroma-tear';
+  const sliceCount = 18;
+  for (let i = 0; i < sliceCount; i++) {
+    const slice = document.createElement('div');
+    slice.className = 'eternal-rgb-slice';
+    slice.style.top = (Math.random() * 100) + '%';
+    slice.style.height = (2 + Math.random() * 12) + 'px';
+    slice.style.setProperty('--rs-delay', (Math.random() * 3.0) + 's');
+    slice.style.setProperty('--rs-dur', (2.5 + Math.random() * 4.0) + 's');
+    tearContainer.appendChild(slice);
+  }
+  ov.appendChild(tearContainer);
+
+  // Screen tear displacement lines
+  for (let i = 0; i < 10; i++) {
+    const tear = document.createElement('div');
+    tear.className = 'eternal-screen-tear';
+    tear.style.background = `linear-gradient(to right, transparent, ${r.color}, #ff0000, ${r.color}, transparent)`;
+    tear.style.setProperty('--tear-y', (5 + Math.random() * 90) + '%');
+    tear.style.setProperty('--tear-h', (2 + Math.random() * 8) + 'px');
+    tear.style.setProperty('--tear-delay', (Math.random() * 4.0) + 's');
+    tear.style.setProperty('--tear-dur', (0.4 + Math.random() * 0.8) + 's');
+    ov.appendChild(tear);
+  }
+
+  // ── PHASE 2 (2-10s): Fire columns rise ────────────────────────────────────
+  const colCount = 14;
+  for (let i = 0; i < colCount; i++) {
+    const col = document.createElement('div');
+    col.className = 'eternal-fire-column';
+    col.style.left = (Math.random() * 100) + '%';
+    col.style.width = (40 + Math.random() * 80) + 'px';
+    col.style.setProperty('--fc-h', (40 + Math.random() * 75) + 'vh');
+    col.style.setProperty('--fc-delay', (1.5 + Math.random() * 6.0) + 's');
+    col.style.setProperty('--fc-dur', (3.0 + Math.random() * 5.0) + 's');
+    ov.appendChild(col);
+  }
+
+  // Ember sparks burst from bottom
+  const emberCount = 120;
+  for (let i = 0; i < emberCount; i++) {
+    const ember = document.createElement('div');
+    ember.className = 'eternal-ember-burst';
+    const size = 2 + Math.random() * 5;
+    ember.style.cssText = `
+      width: ${size}px; height: ${size}px;
+      left: ${10 + Math.random() * 80}%;
+      bottom: ${Math.random() * 20}%;
+      background: radial-gradient(circle, white, ${r.color}, #ff4500);
+      box-shadow: 0 0 ${size * 2}px ${r.color};
+      --eb-x: ${(Math.random() - 0.5) * 200}px;
+      --eb-y: ${-(80 + Math.random() * 200)}px;
+      --eb-delay: ${2.0 + Math.random() * 12.0}s;
+      --eb-dur: ${2.0 + Math.random() * 4.0}s;
+    `;
+    ov.appendChild(ember);
+  }
+
+  // ── PHASE 3 (4-12s): Spiral arms of hellfire radiate ──────────────────────
+  const armCount = 36;
   for (let i = 0; i < armCount; i++) {
     const arm = document.createElement('div');
     arm.className = 'reveal-spiral-arm';
     const angle = (i / armCount) * 360;
-    const len = 120 + Math.random() * 180;
+    const len = 180 + Math.random() * 280;
     arm.style.cssText = `
       transform: rotate(${angle}deg);
-      background: linear-gradient(to right, ${r.color}, transparent);
-      box-shadow: 0 0 8px ${r.color};
+      background: linear-gradient(to right, white, ${r.color}, #ff0000, transparent);
+      box-shadow: 0 0 12px ${r.color}, 0 0 24px #ff0000;
       margin-top: -1px;
       --sp-len: ${len}px;
-      --sp-dur: ${0.6 + Math.random() * 0.8}s;
-      --sp-delay: ${0.05 + (i / armCount) * 0.6}s;
+      --sp-dur: ${1.0 + Math.random() * 1.2}s;
+      --sp-delay: ${3.5 + (i / armCount) * 3.0}s;
     `;
     ov.appendChild(arm);
   }
 
-  // Expanding blood-red shockwaves staggered
-  for (let i = 0; i < 5; i++) {
-    const sw = document.createElement('div');
-    sw.className = 'legendary-shockwave';
-    sw.style.borderColor = r.color;
-    sw.style.boxShadow = `0 0 30px ${r.color}, inset 0 0 20px ${r.color}33`;
-    sw.style.animationDelay = (i * 0.3) + 's';
-    sw.style.animationDuration = '1.4s';
-    ov.appendChild(sw);
-  }
+  // Multiple expanding bloodfire shockwaves in waves
+  const waveTimings = [1.0, 2.5, 4.0, 6.5, 9.0, 12.0, 16.0, 21.0];
+  waveTimings.forEach((t, wi) => {
+    const inner = Math.ceil(1 + wi * 0.5);
+    for (let j = 0; j < inner; j++) {
+      const sw = document.createElement('div');
+      sw.className = 'legendary-shockwave';
+      sw.style.borderColor = wi % 2 === 0 ? r.color : '#ff0000';
+      sw.style.borderWidth = (2 + wi * 0.5) + 'px';
+      sw.style.boxShadow = `0 0 40px ${r.color}, 0 0 80px #ff000055, inset 0 0 30px ${r.color}44`;
+      sw.style.animationDelay = (t + j * 0.2) + 's';
+      sw.style.animationDuration = (1.2 + wi * 0.15) + 's';
+      ov.appendChild(sw);
+    }
+  });
 
-  // Glitch bars in the ETERNAL color
+  // ── PHASE 4 (10-20s): Glitch & hellfire overlay persist ───────────────────
   const glitch = document.createElement('div');
   glitch.className = 'reveal-glitch';
   glitch.style.color = r.color;
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 50; i++) {
     const bar = document.createElement('div');
     bar.className = 'glitch-bar';
     bar.style.top = (Math.random() * 100) + '%';
-    bar.style.background = `linear-gradient(to right, ${r.color}, #ff0000, ${r.color})`;
-    bar.style.height = (1 + Math.random() * 8) + 'px';
-    bar.style.animationDelay = (Math.random() * 2.0) + 's';
-    bar.style.animationDuration = (1.0 + Math.random() * 1.5) + 's';
+    bar.style.background = `linear-gradient(to right, transparent, ${r.color}, #ff0000, #ff6b00, transparent)`;
+    bar.style.height = (1 + Math.random() * 10) + 'px';
+    bar.style.animationDelay = (Math.random() * 20.0) + 's';
+    bar.style.animationDuration = (0.8 + Math.random() * 3.0) + 's';
     glitch.appendChild(bar);
   }
   ov.appendChild(glitch);
 
-  // Flash
-  const fl = document.createElement('div');
-  fl.className = 'reveal-flash';
-  fl.style.background = r.color;
-  fl.style.setProperty('--fl-op', '0.8');
-  fl.style.setProperty('--fl-dur', '0.3s');
-  ov.appendChild(fl);
+  // Multiple successive flashes at the peak
+  const flashTimes = [1.0, 2.2, 4.5, 8.0];
+  flashTimes.forEach((ft, fi) => {
+    const fl = document.createElement('div');
+    fl.className = 'reveal-flash';
+    fl.style.background = fi < 2 ? r.color : 'white';
+    fl.style.setProperty('--fl-op', (1.0 - fi * 0.15).toString());
+    fl.style.setProperty('--fl-dur', (0.3 + fi * 0.1) + 's');
+    fl.style.animationDelay = ft + 's';
+    ov.appendChild(fl);
+  });
 
-  ov.appendChild(makeRevealText(r, fontClass, '1.2s', '6.0s'));
+  // ── PHASE 5 (15-48s): The aura name emerges from the inferno ──────────────
+  // Subtle title line
+  const titleLine = document.createElement('div');
+  titleLine.className = 'eternal-title-reveal';
+  const auraTitle = AURA_TITLES[r.name];
+  if (auraTitle) {
+    titleLine.textContent = auraTitle;
+    titleLine.style.cssText = `
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.65rem, 1.4vw, 0.9rem);
+      letter-spacing: 0.55em;
+      text-transform: uppercase;
+      color: ${r.color};
+      filter: drop-shadow(0 0 12px ${r.color});
+    `;
+    titleLine.style.setProperty('--et-delay', '13.0s');
+    titleLine.style.setProperty('--et-dur', '4.0s');
+    ov.appendChild(titleLine);
+  }
+
+  // The name itself — massive, persistent, burning
+  const nameWrap = document.createElement('div');
+  nameWrap.className = 'eternal-name-reveal';
+  nameWrap.style.setProperty('--en-delay', '17.0s');
+  nameWrap.style.setProperty('--en-dur', '30.0s');
+  nameWrap.innerHTML = `
+    <div class="reveal-aura-name ${fontClass}" style="color:${r.color};font-size:clamp(2.5rem,8vw,6rem);filter:drop-shadow(0 0 30px ${r.color}) drop-shadow(0 0 60px #ff0000) drop-shadow(0 0 120px ${r.color});">
+      ${r.name}
+      ${r.gilded ? '<br><span style="font-size:0.35em;color:#f0c060;letter-spacing:0.4em;font-family:Cinzel,serif">✦ GILDED ✦</span>' : ''}
+    </div>
+  `;
+  ov.appendChild(nameWrap);
 }
 
 function triggerAbsoluteAnim(ov, r, fontClass) {
-  // Phase 1: implosion pulls everything to center
-  const pull = document.createElement('div');
-  pull.className = 'reveal-implosion';
-  pull.style.setProperty('--ip-delay', '0s');
-  pull.style.setProperty('--ip-dur', '1.0s');
-  ov.appendChild(pull);
+  const TOTAL = 58000;
+  const rgb = hexToRgb(r.color);
+  const isGod = r.name === 'God';
 
-  // Phase 2: total white-out
-  const whiteout = document.createElement('div');
-  whiteout.className = 'reveal-absolute-white';
-  whiteout.style.setProperty('--aw-delay', '0.8s');
-  whiteout.style.setProperty('--aw-dur', '2.5s');
-  ov.appendChild(whiteout);
+  // Single fullscreen canvas
+  const cv = document.createElement('canvas');
+  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+  ov.appendChild(cv);
 
-  // Phase 3: god rays burst from center after white-out peak
-  const rayCount = 32;
-  for (let i = 0; i < rayCount; i++) {
-    const ray = document.createElement('div');
-    ray.className = 'reveal-godray';
-    const angle = (i / rayCount) * 360;
-    const opacity = 0.3 + Math.random() * 0.5;
-    const width = 1 + Math.random() * 4;
-    ray.style.cssText = `
-      transform: translate(-50%, -100%) rotate(${angle}deg);
-      background: linear-gradient(to top, white, rgba(232,224,255,0.6), transparent);
-      box-shadow: 0 0 ${width * 4}px white;
-      width: ${width}px;
-      opacity: ${opacity};
-      --gr-delay: ${1.8 + Math.random() * 0.4}s;
-      --gr-dur: ${3.0 + Math.random() * 1.0}s;
-    `;
-    ov.appendChild(ray);
+  // White flash overlay for the initial implosion moment
+  const flash = document.createElement('div');
+  flash.style.cssText = `position:absolute;inset:0;background:white;opacity:0;z-index:5;pointer-events:none;
+    transition:opacity 0.15s ease;`;
+  ov.appendChild(flash);
+
+  // Name overlay
+  const textWrap = document.createElement('div');
+  const auraTitle = AURA_TITLES[r.name];
+  textWrap.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:10;pointer-events:none;opacity:0;transition:opacity 2s ease;';
+  textWrap.innerHTML = `
+    ${auraTitle ? `<div style="font-family:'Cinzel',serif;font-size:clamp(0.6rem,1.3vw,0.85rem);letter-spacing:0.7em;text-transform:uppercase;color:${r.color};margin-bottom:1.4rem;opacity:0.8;">${auraTitle}</div>` : ''}
+    <div class="reveal-aura-name ${fontClass}" style="color:${r.color};
+      font-size:clamp(${isGod?'5rem':'2.8rem'},${isGod?'18':'9'}vw,${isGod?'10rem':'6rem'});
+      filter:drop-shadow(0 0 50px ${r.color}) drop-shadow(0 0 100px white) drop-shadow(0 0 200px ${r.color});
+      animation:absoluteNamePulse 3s ease-in-out infinite;
+      letter-spacing:${isGod?'0.7em':'0.35em'};">
+      ${r.name}${r.gilded ? '<br><span style="font-size:0.22em;color:#f0c060;letter-spacing:0.4em;font-family:Cinzel,serif">✦ GILDED ✦</span>' : ''}
+    </div>`;
+  ov.appendChild(textWrap);
+
+  // Particle + geometry state
+  const particles = [];
+  const rings = [];
+  const beams = [];
+  const stars = [];
+  let t = 0;
+  let raf;
+  let flashOpacity = 0;
+
+  // Seed stars once
+  for (let i = 0; i < 280; i++) {
+    stars.push({ x: Math.random(), y: Math.random(), size: 0.2 + Math.random()*1.6, phase: Math.random()*Math.PI*2, speed: 0.3+Math.random()*0.9 });
   }
 
-  // Expanding pure rings
-  for (let i = 0; i < 6; i++) {
-    const ring = document.createElement('div');
-    ring.className = 'reveal-absolute-ring';
-    ring.style.setProperty('--ar-delay', (1.6 + i * 0.35) + 's');
-    ring.style.setProperty('--ar-dur', (2.0 + i * 0.2) + 's');
-    ov.appendChild(ring);
+  // Spawn ring
+  function spawnRing(col, thick) {
+    rings.push({ r: 0, col, thick: thick||2, life: 1 });
   }
 
-  // Dark backdrop comes in after white fades
-  const bd = makeBackdrop('8.0s');
-  bd.style.animationDelay = '3.0s';
-  ov.appendChild(bd);
-
-  // Subtle static noise
-  const stat = document.createElement('div');
-  stat.className = 'reveal-static';
-  stat.style.backgroundImage = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
-  stat.style.backgroundSize = '200px 200px';
-  stat.style.setProperty('--st-delay', '0.5s');
-  stat.style.animationDuration = '0.06s';
-  stat.style.animationIterationCount = '30';
-  stat.style.opacity = '0.08';
-  ov.appendChild(stat);
-
-  // Crack lines in white/violet
-  const crackContainer = document.createElement('div');
-  crackContainer.className = 'reveal-cracks';
-  crackContainer.style.color = '#ffffff';
-  for (let i = 0; i < 20; i++) {
-    const crack = document.createElement('div');
-    crack.className = 'crack-line';
-    crack.style.background = `linear-gradient(to bottom, white, ${r.color}, transparent)`;
-    crack.style.boxShadow = `0 0 16px white, 0 0 40px ${r.color}`;
-    crack.style.width = (1 + Math.random() * 3) + 'px';
-    crack.style.transform = `rotate(${(i / 20) * 360 + Math.random() * 8}deg)`;
-    crack.style.animationDelay = (0.7 + Math.random() * 0.4) + 's';
-    crack.style.animationDuration = (0.6 + Math.random() * 0.5) + 's';
-    crackContainer.appendChild(crack);
-  }
-  ov.appendChild(crackContainer);
-
-  // Multiple blinding flashes
-  for (let i = 0; i < 4; i++) {
-    const fl = document.createElement('div');
-    fl.className = 'reveal-flash';
-    fl.style.setProperty('--fl-op', (1.0 - i * 0.15).toString());
-    fl.style.setProperty('--fl-dur', '0.4s');
-    fl.style.animationDelay = (0.7 + i * 0.18) + 's';
-    ov.appendChild(fl);
+  // Spawn beam
+  function spawnBeam(angle) {
+    const W = window.innerWidth, H = window.innerHeight;
+    beams.push({ angle, len: 0, maxLen: Math.sqrt(W*W+H*H)*0.6, life: 1 });
   }
 
-  ov.appendChild(makeRevealText(r, fontClass, '3.5s', '7.0s'));
+  // Seed particles
+  function seedParticles(W, H) {
+    for (let i = 0; i < 200; i++) {
+      const ang = Math.random()*Math.PI*2;
+      const orbitR = 30 + Math.random()*Math.min(W,H)*0.42;
+      particles.push({
+        orbitR, orbitA: ang,
+        orbitSpeed: (0.006 + Math.random()*0.01) * (Math.random()<0.5?1:-1),
+        size: 0.5 + Math.random()*2.2,
+        life: Math.random(), maxLife: 4 + Math.random()*10,
+        brightness: 0.4 + Math.random()*0.6,
+      });
+    }
+  }
+
+  // Scheduled events (seconds)
+  const events = [
+    // Phase 1: implosion flashes
+    { at: 0.1, fn: () => { flashOpacity = 1; } },
+    { at: 0.35, fn: () => { flashOpacity = 0.7; } },
+    { at: 0.6, fn: () => { flashOpacity = 1; } },
+    { at: 0.9, fn: () => { flashOpacity = 0.4; } },
+    { at: 1.2, fn: (W,H) => { flashOpacity = 0; spawnRing('#ffffff', 4); spawnRing(r.color, 2); for(let i=0;i<16;i++) spawnBeam((i/16)*Math.PI); } },
+    // Phase 2: rings keep expanding
+    { at: 2.0, fn: () => spawnRing(r.color, 3) },
+    { at: 2.8, fn: () => spawnRing('#ffffff', 2) },
+    { at: 4.0, fn: () => { spawnRing(r.color, 2); spawnRing('#e8e0ff', 1.5); } },
+    { at: 5.5, fn: (W,H) => { seedParticles(W,H); spawnRing('#ffffff', 3); for(let i=0;i<24;i++) spawnBeam((i/24)*Math.PI); } },
+    { at: 7.5, fn: () => { spawnRing(r.color, 2); flashOpacity = 0.15; } },
+    { at: 7.7, fn: () => { flashOpacity = 0; } },
+    { at: 10.0, fn: () => spawnRing('#e8e0ff', 2) },
+    { at: 12.0, fn: () => { spawnRing('#ffffff', 3); spawnRing(r.color, 1.5); } },
+    { at: 16.0, fn: () => { spawnRing(r.color, 2); } },
+    { at: 20.0, fn: () => { spawnRing('#ffffff', 2); flashOpacity = 0.1; } },
+    { at: 20.2, fn: () => { flashOpacity = 0; } },
+    { at: 25.0, fn: () => spawnRing(r.color, 2) },
+    { at: 32.0, fn: () => { spawnRing('#ffffff', 2); spawnRing(r.color, 1); } },
+    { at: 40.0, fn: () => spawnRing(r.color, 2) },
+    { at: 48.0, fn: () => { spawnRing('#ffffff', 3); spawnRing(r.color, 2); } },
+  ];
+  let firedEvents = new Set();
+
+  // Show name text at 12s
+  setTimeout(() => textWrap.style.opacity = '1', 12000);
+  setTimeout(() => textWrap.style.opacity = '0', TOTAL - 2500);
+
+  function loop() {
+    const W = window.innerWidth, H = window.innerHeight;
+    cv.width = W; cv.height = H;
+    const cx = W/2, cy = H/2;
+    const ctx = cv.getContext('2d');
+
+    // Fire events
+    events.forEach((ev, idx) => {
+      if (!firedEvents.has(idx) && t >= ev.at) { firedEvents.add(idx); ev.fn(W, H); }
+    });
+
+    // Apply flash overlay
+    flash.style.opacity = flashOpacity.toString();
+    flashOpacity = Math.max(0, flashOpacity - 0.06);
+
+    // Deep dark background
+    const bgAlpha = t < 0.5 ? 0 : Math.min(0.92, (t - 0.5) * 1.5);
+    ctx.fillStyle = `rgba(1,0,6,${bgAlpha})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // Stars (fade in after t=5)
+    if (t > 5) {
+      const starAlpha = Math.min(0.9, (t - 5) * 0.15);
+      stars.forEach(s => {
+        const tw = 0.3 + 0.7 * Math.abs(Math.sin(s.phase + t * s.speed));
+        ctx.beginPath(); ctx.arc(s.x*W, s.y*H, Math.max(0, s.size*tw), 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${tw * starAlpha})`;
+        ctx.shadowColor = r.color; ctx.shadowBlur = s.size * 3 * tw;
+        ctx.fill(); ctx.shadowBlur = 0;
+      });
+    }
+
+    // Sacred geometry (starts t=4)
+    if (t > 4) {
+      const geoA = Math.min(0.25, (t-4)*0.05);
+      // Rotating concentric rings
+      for (let i = 1; i <= 8; i++) {
+        const pulse = 0.5 + 0.5*Math.sin(t*0.9 - i*0.5);
+        const rad = (i/8)*Math.min(W,H)*0.45 * (0.96 + pulse*0.04);
+        ctx.beginPath(); ctx.arc(cx, cy, Math.max(0, rad), 0, Math.PI*2);
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${geoA * (1-i/10) * pulse})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+      // Metatron lines
+      const pts = [];
+      for (let i = 0; i < 6; i++) {
+        const a = (i/6)*Math.PI*2 + t*0.04;
+        pts.push([cx+Math.cos(a)*Math.min(W,H)*0.18, cy+Math.sin(a)*Math.min(W,H)*0.18]);
+      }
+      ctx.globalAlpha = geoA * 0.6;
+      for (let i = 0; i < pts.length; i++) for (let j = i+1; j < pts.length; j++) {
+        ctx.beginPath(); ctx.moveTo(pts[i][0],pts[i][1]); ctx.lineTo(pts[j][0],pts[j][1]);
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.5)`; ctx.lineWidth=0.6; ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Central eye glow
+    const eyePulse = 0.6 + 0.4*Math.sin(t*1.6);
+    const eyeR = 60 + eyePulse*40;
+    const eg = ctx.createRadialGradient(cx,cy,0,cx,cy,eyeR*2.5);
+    eg.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},${0.25*eyePulse})`);
+    eg.addColorStop(0.3, `rgba(${rgb.r},${rgb.g},${rgb.b},0.08)`);
+    eg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(cx,cy,eyeR*2.5,0,Math.PI*2); ctx.fillStyle=eg; ctx.fill();
+
+    // Beams
+    beams.forEach((b, i) => {
+      b.len = Math.min(b.maxLen, b.len + 30);
+      b.life = Math.max(0, b.life - 0.004);
+      if (b.life <= 0) { beams.splice(i,1); return; }
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(b.angle);
+      const bg = ctx.createLinearGradient(0,0,b.len,0);
+      bg.addColorStop(0, `rgba(255,255,255,${b.life*0.4})`);
+      bg.addColorStop(0.3, `rgba(${rgb.r},${rgb.g},${rgb.b},${b.life*0.2})`);
+      bg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.beginPath(); ctx.moveTo(0,-1.5); ctx.lineTo(b.len,0); ctx.lineTo(0,1.5);
+      ctx.fillStyle = bg; ctx.fill();
+      // Mirror beam
+      ctx.rotate(Math.PI);
+      ctx.beginPath(); ctx.moveTo(0,-1.5); ctx.lineTo(b.len,0); ctx.lineTo(0,1.5);
+      ctx.fillStyle = bg; ctx.fill();
+      ctx.restore();
+    });
+
+    // Rings
+    rings.forEach((rw, i) => {
+      rw.r += 14 + rw.r * 0.02;
+      rw.life = Math.max(0, 1 - rw.r / (Math.sqrt(W*W+H*H)*0.75));
+      if (rw.r > Math.sqrt(W*W+H*H)) { rings.splice(i,1); return; }
+      const rwRgb = hexToRgb(rw.col);
+      ctx.beginPath(); ctx.arc(cx, cy, Math.max(0, rw.r), 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(${rwRgb.r},${rwRgb.g},${rwRgb.b},${rw.life * 0.8})`;
+      ctx.lineWidth = rw.thick * rw.life;
+      ctx.shadowColor = rw.col; ctx.shadowBlur = 20 * rw.life;
+      ctx.stroke(); ctx.shadowBlur = 0;
+    });
+
+    // Orbital particles (t>5)
+    if (t > 5) {
+      particles.forEach((p, i) => {
+        p.life += 0.016;
+        if (p.life >= p.maxLife) { p.life=0; p.maxLife=4+Math.random()*10; p.orbitSpeed=(0.006+Math.random()*0.01)*(Math.random()<0.5?1:-1); }
+        p.orbitA += p.orbitSpeed;
+        const px = cx + Math.cos(p.orbitA)*p.orbitR;
+        const py = cy + Math.sin(p.orbitA)*p.orbitR*0.5;
+        const fade = Math.sin((p.life/p.maxLife)*Math.PI) * p.brightness;
+        const ps = Math.max(0, p.size * fade);
+        ctx.beginPath(); ctx.arc(px, py, ps, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${fade * 0.85})`;
+        ctx.shadowColor = r.color; ctx.shadowBlur = ps * 4;
+        ctx.fill(); ctx.shadowBlur = 0;
+      });
+    }
+
+    // Spiral particle streams (t>3)
+    if (t > 3) {
+      const sAlpha = Math.min(0.7, (t-3)*0.12);
+      const N = 100;
+      for (let i = 0; i < N; i++) {
+        const frac = i/N;
+        const ang = frac*Math.PI*8 + t*0.6;
+        const rad = frac*Math.min(W,H)*0.42;
+        const px = cx + Math.cos(ang)*rad;
+        const py = cy + Math.sin(ang)*rad*0.55;
+        const ps2 = Math.max(0,(1-frac)*2.5);
+        ctx.beginPath(); ctx.arc(px,py,ps2,0,Math.PI*2);
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${sAlpha*(1-frac)})`;
+        ctx.fill();
+      }
+    }
+
+    t += 0.016;
+    raf = requestAnimationFrame(loop);
+  }
+  loop();
+  setTimeout(() => { cancelAnimationFrame(raf); }, TOTAL + 200);
 }
 
 
