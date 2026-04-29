@@ -1,0 +1,3843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<parameter name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noko's RNG</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Cinzel+Decorative:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Nunito:wght@400;600;700&family=Exo+2:wght@400;600;700&family=Orbitron:wght@400;600;700;900&family=Playfair+Display:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=Josefin+Sans:wght@300;400;600&family=Black+Ops+One&family=Bebas+Neue&family=Press+Start+2P&family=Satisfy&family=Pacifico&family=Dancing+Script:wght@700&family=Permanent+Marker&family=Lobster&family=Righteous&family=Russo+One&family=Teko:wght@400;600&family=Rajdhani:wght@600;700&family=Audiowide&family=Chakra+Petch:wght@600;700&family=Syncopate:wght@400;700&family=Share+Tech+Mono&family=VT323&family=Silkscreen&family=Special+Elite&family=Alfa+Slab+One&family=Ultra&family=Boogaloo&family=Fredoka+One&family=Abril+Fatface&family=Sigmar+One&family=Rammetto+One&family=Titan+One&family=Boogaloo&family=Comfortaa:wght@700&family=Kaushan+Script&family=Sacramento&family=Great+Vibes&family=Tangerine:wght@700&family=Philosopher:wght@700&family=Cormorant+Garamond:wght@700&family=UnifrakturMaguntia&family=MedievalSharp&family=Pirata+One&family=Caesar+Dressing&family=Rye&family=Almendra:wght@700&family=Metamorphous&family=Uncial+Antiqua&family=Creepster&family=Eater&family=Henny+Penny&family=Nosifer&family=Metal+Mania&family=Faster+One&family=Fugaz+One&family=Boogaloo&family=Tilt+Neon&family=Monoton&family=Neon+Tubes&family=Syne:wght@800&family=Space+Grotesk:wght@700&family=Jura:wght@700&family=Electrolize&family=Share+Tech&family=Nova+Square&family=Russo+One&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #05060f;
+  --bg2: #0a0c1a;
+  --bg3: #0f1226;
+  --border: rgba(255,255,255,0.07);
+  --border-bright: rgba(255,255,255,0.15);
+  --text: #c8cde8;
+  --text-dim: #4a5080;
+  --text-bright: #eef0ff;
+  --gold: #f0c060;
+  --gold-dim: #7a6030;
+
+  /* tier colors */ 
+  --common: #6b7280;
+  --uncommon: #a78bfa;
+  --rare: #3b82f6;
+  --epic: #10b981;
+  --legendary: #f59e0b;
+  --mythic: #ec4899;
+  --divine: #f0c060;
+  --celestial: #22d3ee;
+  --cosmic: #a855f7;
+  --transcendent: #ffffff;
+  --primordial: #ff0080;
+  --eternal: #ff3a00;
+  --absolute: #e8e0ff;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ── STARFIELD ── */
+#stars {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  overflow: hidden;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle var(--d) ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.8); }
+  50% { opacity: var(--o); transform: scale(1); }
+}
+
+/* ── FLASH OVERLAY ── */
+#flash {
+  position: fixed; inset: 0; z-index: 999; pointer-events: none;
+  background: white; opacity: 0; transition: opacity 0.05s;
+}
+
+/* ── LAYOUT ── */
+#app {
+  position: relative; z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ── HEADER ── */
+header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+.game-title {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: 0.3em;
+  background: linear-gradient(135deg, #c8a84b 0%, #f0e090 40%, #c8a84b 70%, #a07820 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 30px rgba(240,192,96,0.3));
+}
+.game-subtitle {
+  font-size: 0.65rem;
+  letter-spacing: 0.5em;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+  text-transform: uppercase;
+}
+
+/* ── STAT BAR ── */
+.stat-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+.stat-chip {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+}
+.stat-chip .label { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+.stat-chip .val { color: var(--text-bright); font-weight: 500; }
+.stat-chip .val.gold { color: var(--gold); }
+.stat-chip .val.luck { color: #7dd3fc; }
+
+/* ── MAIN GRID ── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top left, rgba(255,255,255,0.02), transparent 60%);
+  pointer-events: none;
+}
+.card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.6rem;
+}
+
+/* ── ROLL CARD ── */
+.roll-card {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+.roll-display {
+  flex: 1;
+  text-align: center;
+}
+.aura-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  margin-bottom: 0.25rem;
+}
+#aura-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  border-radius: 12px;
+}
+.roll-aura-name {
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  letter-spacing: 0.12em;
+  line-height: 1;
+  transition: all 0.3s;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+.roll-aura-name.animate {
+  animation: rollFlicker 0.04s steps(1) infinite;
+}
+.roll-aura-name.rare-font {
+  filter: drop-shadow(0 0 12px currentColor);
+  animation: epicPulse 2s ease-in-out infinite;
+}
+.roll-aura-name.transcendent-font {
+  filter: drop-shadow(0 0 20px currentColor) drop-shadow(0 0 40px currentColor);
+  animation: beyondPulse 1.5s ease-in-out infinite;
+}
+@keyframes epicPulse {
+  0%, 100% { letter-spacing: 0.20em; filter: drop-shadow(0 0 10px currentColor); }
+  50%       { letter-spacing: 0.26em; filter: drop-shadow(0 0 22px currentColor); }
+}
+@keyframes beyondPulse {
+  0%, 100% { letter-spacing: 0.24em; filter: drop-shadow(0 0 18px currentColor) drop-shadow(0 0 36px currentColor); opacity: 0.92; }
+  50%       { letter-spacing: 0.34em; filter: drop-shadow(0 0 32px currentColor) drop-shadow(0 0 60px currentColor); opacity: 1; }
+}
+@keyframes rollFlicker {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+.roll-tier-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  padding: 0.2rem 0.8rem;
+  border-radius: 99px;
+  border: 1px solid currentColor;
+  margin-top: 0.5rem;
+  opacity: 0.7;
+}
+.roll-chance {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+  letter-spacing: 0.05em;
+}
+.gilded-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.65rem;
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  background: rgba(240,192,96,0.08);
+  padding: 0.2rem 0.7rem;
+  border-radius: 99px;
+  margin-left: 0.5rem;
+  animation: gildedPulse 2s ease-in-out infinite;
+}
+@keyframes gildedPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(240,192,96,0.3); }
+  50% { box-shadow: 0 0 18px rgba(240,192,96,0.6); }
+}
+
+.roll-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 140px;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.btn:not(:disabled):hover {
+  background: var(--bg2);
+  border-color: var(--border-bright);
+  color: var(--text-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+.btn:not(:disabled):active { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-roll { 
+  background: linear-gradient(135deg, var(--gold-dim), var(--gold)); 
+  border-color: var(--gold); 
+  color: var(--bg); 
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.btn-roll:not(:disabled):hover { 
+  box-shadow: 0 8px 30px rgba(240,192,96,0.4); 
+  transform: translateY(-2px);
+}
+.btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+
+/* ── NAV ── */
+.nav-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.nav-btn {
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: var(--bg2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nav-btn:hover { background: var(--bg3); color: var(--text); }
+.nav-btn.active { background: var(--bg3); border-color: var(--gold-dim); color: var(--gold); }
+
+/* ── PANELS ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.tab {
+  flex: 1;
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--bg3);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 6px 6px 0 0;
+  padding: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.tab:hover { color: var(--text); background: var(--bg2); }
+.tab.active { background: var(--bg2); color: var(--gold); border-color: var(--gold-dim); border-bottom-color: transparent; }
+
+/* ── LOG ── */
+.log-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.8rem;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.7rem;
+  line-height: 1.6;
+}
+.log-line { color: var(--text-dim); }
+.log-line.special { color: var(--gold); }
+.log-box::-webkit-scrollbar { width: 6px; }
+.log-box::-webkit-scrollbar-track { background: var(--bg); border-radius: 3px; }
+.log-box::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+
+/* ── INVENTORY ── */
+.inv-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.inv-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  transition: all 0.2s;
+}
+.inv-item:hover { border-color: var(--border-bright); background: var(--bg2); }
+.inv-item-name { flex: 1; font-weight: 500; font-size: 0.8rem; }
+.inv-item-count { color: var(--text-dim); font-size: 0.75rem; }
+.empty-msg {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+/* ── POTIONS (inv) ── */
+.potion-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+}
+.potion-icon { font-size: 1.5rem; }
+.potion-info { flex: 1; }
+.potion-name { font-size: 0.82rem; font-weight: 500; margin-bottom: 0.2rem; }
+.potion-desc { font-size: 0.65rem; color: var(--text-dim); }
+.potion-count { color: var(--text-dim); font-size: 0.75rem; margin-right: 0.5rem; }
+.potion-use {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.potion-use:hover { background: var(--bg2); border-color: var(--border-bright); }
+.potion-use:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── COLLECTION ── */
+.collection-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.collection-progress {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  height: 14px;
+  overflow: hidden;
+  position: relative;
+}
+#col-bar {
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  height: 100%;
+  transition: width 0.4s;
+}
+.collection-count {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.col-filters {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.col-filter-btn {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--bg3);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.col-filter-btn:hover { background: var(--bg2); color: var(--text); }
+.col-filter-btn.active { background: var(--bg2); border-color: currentColor; }
+
+#col-content { display: flex; flex-direction: column; gap: 1.5rem; }
+.collection-tier-group {}
+.collection-tier-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tier-found { color: var(--text-dim); font-size: 0.65rem; }
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.6rem;
+}
+.col-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  position: relative;
+  transition: all 0.2s;
+}
+.col-card:hover { border-color: var(--border-bright); transform: translateY(-2px); }
+.col-card.undiscovered { opacity: 0.4; }
+.col-card.undiscovered:hover { opacity: 0.6; }
+.col-card-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.col-card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+}
+.col-card-count {
+  color: var(--text);
+  font-weight: 500;
+}
+.col-card-new {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  background: var(--gold);
+  color: var(--bg);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.col-gilded-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+
+/* ── CRAFT ── */
+.gloves-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.glove-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  position: relative;
+  transition: all 0.2s;
+}
+.glove-card:hover { border-color: var(--border-bright); }
+.glove-card.crafted { border-color: var(--gold-dim); }
+.glove-card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.glove-card-desc {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 0.8rem;
+  line-height: 1.4;
+}
+.glove-recipe {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.68rem;
+}
+.glove-recipe-title {
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+  font-size: 0.6rem;
+}
+.glove-recipe-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0;
+}
+.glove-recipe-item.have { color: var(--text); }
+.glove-recipe-item.need { color: var(--text-dim); }
+.glove-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.glove-actions button {
+  flex: 1;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.55rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.glove-actions button:hover:not(:disabled) { background: var(--bg2); border-color: var(--border-bright); }
+.glove-actions button:disabled { opacity: 0.3; cursor: not-allowed; }
+.glove-actions button.equipped { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+
+/* ── BANK ── */
+.tier-coin-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+.tier-coin-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  font-size: 0.75rem;
+}
+.tier-name { font-weight: 500; }
+.coin-val { color: var(--gold); font-weight: 600; }
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.8rem;
+}
+.shop-item {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  transition: all 0.2s;
+}
+.shop-item:hover { border-color: var(--border-bright); }
+.shop-item-info { flex: 1; }
+.shop-item-name { font-size: 0.8rem; font-weight: 500; margin-bottom: 0.25rem; }
+.shop-item-stats { font-size: 0.65rem; color: var(--text-dim); }
+.shop-item-cost {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold);
+  background: var(--bg);
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.shop-item-cost:hover:not(:disabled) { background: var(--bg2); border-color: var(--gold); box-shadow: 0 0 12px rgba(240,192,96,0.3); }
+.shop-item-cost:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── AUTO ROLL ── */
+.auto-controls { margin-bottom: 1.5rem; }
+.auto-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.6rem;
+}
+.auto-options {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.auto-opt {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.auto-opt:hover { background: var(--bg2); border-color: var(--border-bright); }
+.auto-opt.selected { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+.auto-status {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--bg2);
+  color: var(--text-bright);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  font-size: 0.75rem;
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.3s;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── BUFF BAR ── */
+.buff-bar {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.buff-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  margin-bottom: 0.4rem;
+}
+.buff-name { color: #7dd3fc; }
+.buff-time { color: var(--text-dim); }
+.buff-track {
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.buff-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1d6fd4, #7dd3fc);
+  border-radius: 99px;
+  transition: width 1s linear;
+}
+.biome-fill { background: linear-gradient(90deg, #22c55e, #67e8f9) !important; }
+.biome-boosted-row {
+  font-size: 0.58rem;
+  color: #86efac;
+  margin-top: 0.35rem;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+.no-buff { color: var(--text-dim); font-size: 0.65rem; }
+.stat-chip .val.green { color: #86efac; }
+
+/* ── POTION QUICK-USE ── */
+.potion-use-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.pot-quick {
+  font-size: 0.65rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+.pot-quick:hover:not(:disabled) { background: var(--bg2); border-color: var(--border-bright); }
+.pot-quick:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── BIOME OVERLAY ── */
+#biome-overlay { transition: opacity 2s, background 2s; }
+body.biome-active #app { animation: biomeBorderPulse 3s ease-in-out infinite; }
+@keyframes biomeBorderPulse {
+  0%,100% { filter: none; }
+  50% { filter: brightness(1.04); }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 700px) {
+  .roll-card { flex-direction: column; gap: 1rem; }
+  .roll-actions { width: 100%; }
+  .collection-grid { grid-template-columns: 1fr; }
+  .gloves-grid { grid-template-columns: 1fr; }
+  .shop-grid { grid-template-columns: 1fr; }
+}
+
+/* ── TIER FONTS ── */
+.font-common      { font-family: 'DM Mono', monospace; font-weight: 400; letter-spacing: 0.06em; }
+.font-uncommon    { font-family: 'Nunito', sans-serif; font-weight: 700; letter-spacing: 0.08em; }
+.font-rare        { font-family: 'Exo 2', sans-serif; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.font-epic        { font-family: 'Orbitron', monospace; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+.font-legendary   { font-family: 'Cinzel Decorative', serif; font-weight: 700; letter-spacing: 0.20em; }
+.font-mythic      { font-family: 'Playfair Display', serif; font-weight: 900; letter-spacing: 0.16em; font-style: italic; }
+.font-divine      { font-family: 'IM Fell English', serif; font-weight: 400; letter-spacing: 0.22em; font-style: italic; }
+.font-celestial   { font-family: 'Josefin Sans', sans-serif; font-weight: 300; letter-spacing: 0.32em; text-transform: uppercase; }
+.font-cosmic      { font-family: 'Black Ops One', cursive; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; }
+.font-transcendent{ font-family: 'Bebas Neue', cursive; font-weight: 400; letter-spacing: 0.36em; text-transform: uppercase; }
+.font-primordial  { font-family: 'Press Start 2P', monospace; font-weight: 400; letter-spacing: 0.12em; font-size: 0.72em; }
+.font-eternal     { font-family: 'UnifrakturMaguntia', cursive; font-weight: 400; letter-spacing: 0.16em; font-size: 0.9em; filter: drop-shadow(0 0 20px #ff3a00) drop-shadow(0 0 40px #ff3a00); }
+.font-absolute    { font-family: 'Cinzel Decorative', serif; font-weight: 900; letter-spacing: 0.36em; text-transform: uppercase; filter: drop-shadow(0 0 30px #e8e0ff) drop-shadow(0 0 60px #ffffff); }
+
+/* ── PER-AURA FONTS ── */
+/* COMMON */
+.af-Breeze      { font-family:'Comfortaa',cursive; font-weight:700; letter-spacing:0.10em; }
+.af-Spark       { font-family:'Boogaloo',cursive; letter-spacing:0.08em; }
+.af-Ripple      { font-family:'Pacifico',cursive; letter-spacing:0.04em; }
+.af-Ember       { font-family:'Righteous',cursive; letter-spacing:0.10em; }
+.af-Mist        { font-family:'Satisfy',cursive; letter-spacing:0.05em; }
+.af-Pebble      { font-family:'Special Elite',cursive; letter-spacing:0.06em; }
+.af-Leaf        { font-family:'Dancing Script',cursive; font-weight:700; letter-spacing:0.04em; }
+.af-Drizzle     { font-family:'Kaushan Script',cursive; letter-spacing:0.05em; }
+/* UNCOMMON */
+.af-Flame       { font-family:'Lobster',cursive; letter-spacing:0.06em; }
+.af-Frost       { font-family:'Josefin Sans',sans-serif; font-weight:300; letter-spacing:0.28em; text-transform:uppercase; }
+.af-Thunder     { font-family:'Teko',sans-serif; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; }
+.af-Quake       { font-family:'Alfa Slab One',cursive; letter-spacing:0.08em; }
+.af-Gale        { font-family:'Syncopate',sans-serif; font-weight:700; letter-spacing:0.20em; text-transform:uppercase; }
+.af-Torrent     { font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; }
+.af-Shimmer     { font-family:'Sacramento',cursive; letter-spacing:0.06em; font-size:1.1em; }
+.af-Shadow      { font-family:'Philosopher',serif; font-weight:700; letter-spacing:0.12em; }
+.af-Bloom       { font-family:'Great Vibes',cursive; letter-spacing:0.04em; font-size:1.05em; }
+.af-Tide        { font-family:'Electrolize',sans-serif; letter-spacing:0.18em; text-transform:uppercase; }
+/* RARE */
+.af-Blaze       { font-family:'Fugaz One',cursive; letter-spacing:0.10em; text-transform:uppercase; }
+.af-Glacier     { font-family:'Nova Square',cursive; letter-spacing:0.16em; text-transform:uppercase; }
+.af-Storm       { font-family:'Audiowide',cursive; letter-spacing:0.14em; text-transform:uppercase; }
+.af-Tremor      { font-family:'Rammetto One',cursive; letter-spacing:0.10em; }
+.af-Typhoon     { font-family:'Chakra Petch',sans-serif; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; }
+.af-Cascade     { font-family:'Cormorant Garamond',serif; font-weight:700; letter-spacing:0.16em; font-style:italic; }
+.af-Radiance    { font-family:'Abril Fatface',cursive; letter-spacing:0.10em; }
+.af-Eclipse     { font-family:'Metamorphous',cursive; letter-spacing:0.12em; }
+.af-Blossom     { font-family:'Tangerine',cursive; font-weight:700; letter-spacing:0.06em; font-size:1.2em; }
+.af-Tsunami     { font-family:'Russo One',sans-serif; letter-spacing:0.18em; text-transform:uppercase; }
+.af-Aurora      { font-family:'Jura',sans-serif; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; }
+.af-Voltage     { font-family:'Share Tech Mono',monospace; letter-spacing:0.12em; text-transform:uppercase; }
+/* EPIC */
+.af-Inferno     { font-family:'Metal Mania',cursive; letter-spacing:0.12em; }
+.af-Permafrost  { font-family:'Space Grotesk',sans-serif; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; }
+.af-Tempest     { font-family:'Syne',sans-serif; font-weight:800; letter-spacing:0.16em; text-transform:uppercase; }
+.af-Seismic     { font-family:'Sigmar One',cursive; letter-spacing:0.10em; }
+.af-Cyclone     { font-family:'Tilt Neon',cursive; letter-spacing:0.14em; text-transform:uppercase; }
+.af-Deluge      { font-family:'Share Tech',sans-serif; letter-spacing:0.18em; text-transform:uppercase; }
+.af-Brilliance  { font-family:'Titan One',cursive; letter-spacing:0.10em; }
+.af-Void        { font-family:'Creepster',cursive; letter-spacing:0.10em; }
+.af-Verdant     { font-family:'Permanent Marker',cursive; letter-spacing:0.06em; }
+.af-Abyss       { font-family:'Nosifer',cursive; letter-spacing:0.08em; }
+.af-Sunburst    { font-family:'Faster One',cursive; letter-spacing:0.12em; }
+.af-Moonlight   { font-family:'Almendra',serif; font-weight:700; letter-spacing:0.14em; }
+.af-Stormfront  { font-family:'Exo 2',sans-serif; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; }
+.af-Wildfire    { font-family:'Eater',cursive; letter-spacing:0.08em; }
+/* LEGENDARY */
+.af-Phoenix     { font-family:'Caesar Dressing',cursive; letter-spacing:0.14em; }
+.af-Kraken      { font-family:'Pirata One',cursive; letter-spacing:0.12em; }
+.af-Dragon      { font-family:'UnifrakturMaguntia',cursive; letter-spacing:0.08em; }
+.af-Leviathan   { font-family:'Uncial Antiqua',cursive; letter-spacing:0.12em; }
+.af-Behemoth    { font-family:'Henny Penny',cursive; letter-spacing:0.10em; }
+.af-Celestial   { font-family:'Cinzel Decorative',serif; font-weight:700; letter-spacing:0.20em; }
+.af-Nebula      { font-family:'Jura',sans-serif; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; }
+.af-Supernova   { font-family:'Orbitron',monospace; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; }
+.af-Quantum     { font-family:'Monoton',cursive; letter-spacing:0.18em; text-transform:uppercase; }
+.af-Prismatic   { font-family:'Rye',cursive; letter-spacing:0.12em; }
+.af-Zenith      { font-family:'Ultra',serif; letter-spacing:0.14em; }
+.af-Apex        { font-family:'Black Ops One',cursive; letter-spacing:0.16em; text-transform:uppercase; }
+.af-Stellar     { font-family:'Josefin Sans',sans-serif; font-weight:300; letter-spacing:0.36em; text-transform:uppercase; }
+.af-Enigma      { font-family:'Almendra',serif; font-weight:700; font-style:italic; letter-spacing:0.16em; }
+.af-Paragon     { font-family:'Cinzel Decorative',serif; font-weight:900; letter-spacing:0.22em; }
+/* MYTHIC */
+.af-Titan       { font-family:'Bebas Neue',cursive; letter-spacing:0.26em; }
+.af-Hydra       { font-family:'Metamorphous',cursive; letter-spacing:0.14em; }
+.af-Chimera     { font-family:'Creepster',cursive; letter-spacing:0.14em; filter:drop-shadow(0 0 8px currentColor); }
+.af-Seraphim    { font-family:'IM Fell English',serif; font-style:italic; letter-spacing:0.20em; }
+.af-Omega       { font-family:'Orbitron',monospace; font-weight:900; letter-spacing:0.20em; text-transform:uppercase; }
+.af-Genesis     { font-family:'Cormorant Garamond',serif; font-weight:700; font-style:italic; letter-spacing:0.20em; }
+.af-Sovereign   { font-family:'UnifrakturMaguntia',cursive; letter-spacing:0.10em; }
+.af-Infinity    { font-family:'Monoton',cursive; letter-spacing:0.20em; text-transform:uppercase; }
+.af-Eternal     { font-family:'Cinzel',serif; font-weight:900; letter-spacing:0.24em; }
+.af-Immortal    { font-family:'Playfair Display',serif; font-weight:900; font-style:italic; letter-spacing:0.18em; }
+.af-Eldritch    { font-family:'Eater',cursive; letter-spacing:0.10em; filter:drop-shadow(0 0 10px currentColor); }
+.af-Arcane      { font-family:'Caesar Dressing',cursive; letter-spacing:0.16em; }
+.af-Absolute    { font-family:'Syne',sans-serif; font-weight:800; letter-spacing:0.22em; text-transform:uppercase; }
+/* DIVINE */
+.af-Ascendant   { font-family:'Cinzel Decorative',serif; font-weight:900; letter-spacing:0.26em; }
+.af-Godhood     { font-family:'IM Fell English',serif; font-style:italic; letter-spacing:0.24em; filter:drop-shadow(0 0 12px currentColor); }
+.af-Transcendence { font-family:'Josefin Sans',sans-serif; font-weight:300; letter-spacing:0.38em; text-transform:uppercase; }
+.af-Nexus       { font-family:'Orbitron',monospace; font-weight:900; letter-spacing:0.22em; text-transform:uppercase; }
+.af-Omnipotent  { font-family:'UnifrakturMaguntia',cursive; letter-spacing:0.12em; filter:drop-shadow(0 0 14px currentColor); }
+.af-Empyrean    { font-family:'Cormorant Garamond',serif; font-weight:700; font-style:italic; letter-spacing:0.24em; }
+.af-Aetherial   { font-family:'Tangerine',cursive; font-weight:700; font-size:1.3em; letter-spacing:0.08em; filter:drop-shadow(0 0 10px currentColor); }
+.af-Sanctified  { font-family:'Almendra',serif; font-weight:700; letter-spacing:0.20em; filter:drop-shadow(0 0 10px currentColor); }
+/* CELESTIAL */
+.af-Starborn    { font-family:'Josefin Sans',sans-serif; font-weight:300; letter-spacing:0.40em; text-transform:uppercase; filter:drop-shadow(0 0 16px currentColor); }
+.af-CosmicDust  { font-family:'Syne',sans-serif; font-weight:800; letter-spacing:0.28em; text-transform:uppercase; filter:drop-shadow(0 0 16px currentColor); }
+.af-Constellation { font-family:'Cinzel',serif; font-weight:900; letter-spacing:0.30em; filter:drop-shadow(0 0 18px currentColor); }
+.af-Galaxy      { font-family:'Orbitron',monospace; font-weight:900; letter-spacing:0.24em; text-transform:uppercase; filter:drop-shadow(0 0 20px currentColor); }
+.af-Universe    { font-family:'Monoton',cursive; letter-spacing:0.26em; text-transform:uppercase; filter:drop-shadow(0 0 22px currentColor); }
+.af-VoidWalker  { font-family:'Creepster',cursive; letter-spacing:0.18em; filter:drop-shadow(0 0 16px currentColor) drop-shadow(0 0 32px currentColor); }
+/* COSMIC */
+.af-Singularity   { font-family:'Bebas Neue',cursive; letter-spacing:0.40em; text-transform:uppercase; filter:drop-shadow(0 0 24px currentColor) drop-shadow(0 0 48px currentColor); }
+.af-EventHorizon  { font-family:'Black Ops One',cursive; letter-spacing:0.20em; text-transform:uppercase; filter:drop-shadow(0 0 22px currentColor) drop-shadow(0 0 44px currentColor); }
+.af-DarkMatter    { font-family:'Nosifer',cursive; letter-spacing:0.14em; filter:drop-shadow(0 0 20px currentColor) drop-shadow(0 0 40px currentColor); }
+.af-Multiverse    { font-family:'Monoton',cursive; letter-spacing:0.28em; text-transform:uppercase; filter:drop-shadow(0 0 24px currentColor) drop-shadow(0 0 48px currentColor); }
+.af-BigBang       { font-family:'Ultra',serif; letter-spacing:0.24em; filter:drop-shadow(0 0 26px currentColor) drop-shadow(0 0 52px currentColor); }
+.af-Xenogenesis   { font-family:'Orbitron',monospace; font-weight:900; letter-spacing:0.22em; text-transform:uppercase; filter:drop-shadow(0 0 24px currentColor) drop-shadow(0 0 50px currentColor); }
+.af-Nullspace     { font-family:'Syncopate',sans-serif; font-weight:700; letter-spacing:0.32em; text-transform:uppercase; filter:drop-shadow(0 0 22px currentColor) drop-shadow(0 0 44px currentColor); }
+.af-Paradox       { font-family:'VT323',monospace; font-size:1.3em; letter-spacing:0.20em; filter:drop-shadow(0 0 22px currentColor) drop-shadow(0 0 46px currentColor); }
+.af-Entropy       { font-family:'Syne',sans-serif; font-weight:800; letter-spacing:0.26em; text-transform:uppercase; filter:drop-shadow(0 0 24px currentColor) drop-shadow(0 0 48px currentColor); }
+.af-Hypernova     { font-family:'Audiowide',cursive; letter-spacing:0.22em; text-transform:uppercase; filter:drop-shadow(0 0 28px currentColor) drop-shadow(0 0 56px currentColor); }
+/* TRANSCENDENT */
+.af-RealityBender { font-family:'Press Start 2P',monospace; letter-spacing:0.14em; font-size:0.65em; filter:drop-shadow(0 0 28px currentColor) drop-shadow(0 0 56px currentColor); }
+.af-DimensionalRift { font-family:'VT323',monospace; font-size:1.4em; letter-spacing:0.18em; filter:drop-shadow(0 0 28px currentColor) drop-shadow(0 0 56px currentColor); }
+.af-TimeEternal   { font-family:'Silkscreen',cursive; letter-spacing:0.16em; filter:drop-shadow(0 0 28px currentColor) drop-shadow(0 0 56px currentColor); }
+.af-Eschaton      { font-family:'Cinzel Decorative',serif; font-weight:900; letter-spacing:0.34em; filter:drop-shadow(0 0 30px currentColor) drop-shadow(0 0 60px currentColor); }
+.af-Axiom         { font-family:'Monoton',cursive; letter-spacing:0.30em; text-transform:uppercase; filter:drop-shadow(0 0 28px currentColor) drop-shadow(0 0 58px currentColor); }
+.af-Unbound       { font-family:'Bebas Neue',cursive; letter-spacing:0.44em; text-transform:uppercase; filter:drop-shadow(0 0 32px currentColor) drop-shadow(0 0 64px currentColor); }
+.af-Phantasm      { font-family:'Creepster',cursive; letter-spacing:0.20em; filter:drop-shadow(0 0 28px currentColor) drop-shadow(0 0 56px currentColor); }
+.af-Culmination   { font-family:'Josefin Sans',sans-serif; font-weight:300; letter-spacing:0.46em; text-transform:uppercase; filter:drop-shadow(0 0 30px currentColor) drop-shadow(0 0 62px currentColor); }
+/* PRIMORDIAL */
+.af-Origin        { font-family:'UnifrakturMaguntia',cursive; letter-spacing:0.14em; filter:drop-shadow(0 0 32px currentColor) drop-shadow(0 0 64px currentColor); animation:beyondPulse 1.2s ease-in-out infinite; }
+.af-TheFirst      { font-family:'Press Start 2P',monospace; font-size:0.60em; letter-spacing:0.10em; filter:drop-shadow(0 0 32px currentColor) drop-shadow(0 0 64px currentColor); animation:beyondPulse 1.2s ease-in-out infinite; }
+.af-Annihilation  { font-family:'Eater',cursive; letter-spacing:0.16em; filter:drop-shadow(0 0 34px currentColor) drop-shadow(0 0 68px currentColor); animation:beyondPulse 1.1s ease-in-out infinite; }
+.af-Preordained   { font-family:'IM Fell English',serif; font-style:italic; letter-spacing:0.22em; filter:drop-shadow(0 0 34px currentColor) drop-shadow(0 0 68px currentColor); animation:beyondPulse 1.3s ease-in-out infinite; }
+.af-Architect     { font-family:'Cinzel',serif; font-weight:900; letter-spacing:0.28em; filter:drop-shadow(0 0 36px currentColor) drop-shadow(0 0 72px currentColor); animation:beyondPulse 1.0s ease-in-out infinite; }
+.af-Unnamed       { font-family:'Special Elite',cursive; letter-spacing:0.08em; opacity:0.85; filter:drop-shadow(0 0 30px currentColor) drop-shadow(0 0 60px currentColor); animation:beyondPulse 1.5s ease-in-out infinite; }
+.af-Void2         { font-family:'Nosifer',cursive; letter-spacing:0.12em; filter:drop-shadow(0 0 36px currentColor) drop-shadow(0 0 72px currentColor); animation:beyondPulse 0.9s ease-in-out infinite; }
+/* ETERNAL */
+.af-Oblivion      { font-family:'Eater',cursive; letter-spacing:0.16em; filter:drop-shadow(0 0 28px #ff3a00) drop-shadow(0 0 56px #ff0000); animation:eternalPulse 1.0s ease-in-out infinite; }
+.af-TheUndying    { font-family:'UnifrakturMaguntia',cursive; letter-spacing:0.18em; filter:drop-shadow(0 0 28px #c0392b) drop-shadow(0 0 56px #ff3a00); animation:eternalPulse 1.1s ease-in-out infinite; }
+.af-Ragnarok      { font-family:'Metal Mania',cursive; letter-spacing:0.20em; filter:drop-shadow(0 0 32px #ff6b00) drop-shadow(0 0 64px #ff3a00); animation:eternalPulse 0.9s ease-in-out infinite; }
+.af-Apocalypse    { font-family:'Pirata One',cursive; letter-spacing:0.18em; filter:drop-shadow(0 0 30px #ff3a00) drop-shadow(0 0 60px #ff0000); animation:eternalPulse 1.2s ease-in-out infinite; }
+.af-Purgatory     { font-family:'Cormorant Garamond',serif; font-weight:700; font-style:italic; letter-spacing:0.24em; filter:drop-shadow(0 0 28px #c0392b) drop-shadow(0 0 58px #ff3a00); animation:eternalPulse 1.3s ease-in-out infinite; }
+.af-Damnation     { font-family:'Nosifer',cursive; letter-spacing:0.14em; filter:drop-shadow(0 0 32px #ff0000) drop-shadow(0 0 64px #ff3a00); animation:eternalPulse 0.85s ease-in-out infinite; }
+.af-Armageddon    { font-family:'Black Ops One',cursive; letter-spacing:0.22em; text-transform:uppercase; filter:drop-shadow(0 0 30px #ff6b00) drop-shadow(0 0 62px #ff3a00); animation:eternalPulse 1.0s ease-in-out infinite; }
+.af-Hellfire      { font-family:'Eater',cursive; letter-spacing:0.18em; filter:drop-shadow(0 0 30px #ff4500) drop-shadow(0 0 64px #ff0000); animation:eternalPulse 0.8s ease-in-out infinite; }
+.af-Eschaton2     { font-family:'Caesar Dressing',cursive; letter-spacing:0.20em; filter:drop-shadow(0 0 28px #ff3a00) drop-shadow(0 0 56px #c0392b); animation:eternalPulse 1.15s ease-in-out infinite; }
+/* ABSOLUTE */
+.af-TheEnd      { font-family:'Cinzel Decorative',serif; font-weight:900; letter-spacing:0.40em; text-transform:uppercase; filter:drop-shadow(0 0 40px #ffffff) drop-shadow(0 0 80px #e8e0ff); animation:absolutePulse 2.0s ease-in-out infinite; }
+.af-God         { font-family:'Cinzel',serif; font-weight:900; letter-spacing:0.50em; text-transform:uppercase; filter:drop-shadow(0 0 50px #ffffff) drop-shadow(0 0 100px #e8e0ff); animation:absolutePulse 2.5s ease-in-out infinite; }
+
+@keyframes eternalPulse {
+  0%,100% { letter-spacing:0.16em; filter:drop-shadow(0 0 22px currentColor) drop-shadow(0 0 44px #ff0000); opacity:0.9; }
+  50%     { letter-spacing:0.24em; filter:drop-shadow(0 0 40px currentColor) drop-shadow(0 0 80px #ff3a00); opacity:1; }
+}
+@keyframes absolutePulse {
+  0%,100% { letter-spacing:0.40em; filter:drop-shadow(0 0 30px #ffffff) drop-shadow(0 0 60px #e8e0ff); opacity:0.85; }
+  50%     { letter-spacing:0.55em; filter:drop-shadow(0 0 60px #ffffff) drop-shadow(0 0 120px #e8e0ff); opacity:1; }
+}
+
+/* ── OPENING ANIMATION OVERLAY ── */
+#reveal-overlay {
+  position: fixed; inset: 0; z-index: 9000; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+}
+#reveal-overlay.active { pointer-events: all; opacity: 1; }
+
+/* Shockwave ring */
+.shockwave-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  width: 20px; height: 20px;
+  animation: shockwaveExpand 0.7s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes shockwaveExpand {
+  from { width: 20px; height: 20px; opacity: 0.9; }
+  to   { width: 900px; height: 900px; opacity: 0; }
+}
+
+/* Screen darkness for reveal */
+.reveal-backdrop {
+  position: absolute; inset: 0;
+  background: #000;
+  opacity: 0;
+  animation: backdropFade var(--bd-dur, 1s) ease forwards;
+}
+@keyframes backdropFade {
+  0%   { opacity: 0; }
+  10%  { opacity: 0.92; }
+  80%  { opacity: 0.92; }
+  100% { opacity: 0; }
+}
+
+/* Central reveal text */
+.reveal-text-wrap {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 2;
+  opacity: 0;
+  animation: revealTextIn var(--rt-dur, 1s) ease forwards var(--rt-delay, 0.2s);
+}
+@keyframes revealTextIn {
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.4); filter: blur(20px); }
+  40%  { opacity: 1; transform: translate(-50%,-50%) scale(1.08); filter: blur(0); }
+  70%  { opacity: 1; transform: translate(-50%,-50%) scale(1.0); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(1.15); filter: blur(4px); }
+}
+.reveal-tier-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem; letter-spacing: 0.5em; text-transform: uppercase;
+  opacity: 0.7; margin-bottom: 0.6rem;
+}
+.reveal-aura-name {
+  font-size: clamp(2rem, 6vw, 4rem);
+  line-height: 1.1;
+  filter: drop-shadow(0 0 30px currentColor) drop-shadow(0 0 60px currentColor);
+}
+
+/* Golden rays for Divine */
+.reveal-rays {
+  position: absolute; inset: 0;
+  opacity: 0;
+  animation: raysReveal 1.4s ease forwards 0.1s;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg, currentColor 2deg, transparent 4deg,
+    transparent 20deg, currentColor 22deg, transparent 24deg,
+    transparent 44deg, currentColor 46deg, transparent 48deg,
+    transparent 68deg, currentColor 70deg, transparent 72deg,
+    transparent 92deg, currentColor 94deg, transparent 96deg,
+    transparent 116deg, currentColor 118deg, transparent 120deg,
+    transparent 140deg, currentColor 142deg, transparent 144deg,
+    transparent 164deg, currentColor 166deg, transparent 168deg,
+    transparent 188deg, currentColor 190deg, transparent 192deg,
+    transparent 212deg, currentColor 214deg, transparent 216deg,
+    transparent 236deg, currentColor 238deg, transparent 240deg,
+    transparent 260deg, currentColor 262deg, transparent 264deg,
+    transparent 284deg, currentColor 286deg, transparent 288deg,
+    transparent 308deg, currentColor 310deg, transparent 312deg,
+    transparent 332deg, currentColor 334deg, transparent 336deg,
+    transparent 356deg, currentColor 358deg, transparent 360deg
+  );
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 5%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 5%, transparent 100%);
+}
+@keyframes raysReveal {
+  0%   { opacity: 0; transform: scale(0.5) rotate(-45deg); }
+  20%  { opacity: 0.35; transform: scale(1.2) rotate(0deg); }
+  60%  { opacity: 0.25; transform: scale(1.0) rotate(20deg); }
+  100% { opacity: 0; transform: scale(1.5) rotate(40deg); }
+}
+
+/* Crack/rift effect for Transcendent */
+.reveal-cracks {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.crack-line {
+  position: absolute; left: 50%; top: 50%;
+  width: 2px; height: 0;
+  transform-origin: top center;
+  animation: crackGrow 0.5s ease-out forwards;
+  background: linear-gradient(to bottom, currentColor, transparent);
+  opacity: 0.8;
+  box-shadow: 0 0 8px currentColor, 0 0 20px currentColor;
+}
+@keyframes crackGrow {
+  from { height: 0; opacity: 0.9; }
+  to   { height: 55vh; opacity: 0; }
+}
+
+/* Void implosion for Cosmic */
+.reveal-vortex {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, white 0%, currentColor 30%, transparent 70%);
+  animation: vortexBurst 0.9s ease-out forwards;
+  box-shadow: 0 0 40px 20px currentColor;
+}
+@keyframes vortexBurst {
+  0%   { width: 20px; height: 20px; opacity: 1; filter: brightness(3); }
+  30%  { width: 80vw; height: 80vh; opacity: 0.7; filter: brightness(1); }
+  100% { width: 110vw; height: 110vh; opacity: 0; }
+}
+
+/* Glitch lines for Primordial */
+.reveal-glitch {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.glitch-bar {
+  position: absolute; left: 0; right: 0;
+  height: 3px;
+  background: currentColor;
+  opacity: 0;
+  animation: glitchBar 1.2s steps(1) forwards;
+}
+@keyframes glitchBar {
+  0%,90%,100% { opacity: 0; }
+  10%,30%,50%,70% { opacity: 0.8; }
+  20%,40%,60%,80% { opacity: 0; }
+}
+
+/* ── ETERNAL: time-freeze spiral ── */
+.reveal-spiral-arm {
+  position: absolute; left: 50%; top: 50%;
+  width: 2px;
+  transform-origin: left center;
+  animation: spiralGrow var(--sp-dur, 1.5s) ease-out forwards var(--sp-delay, 0s);
+  opacity: 0;
+}
+@keyframes spiralGrow {
+  0%   { opacity: 0; width: 2px; }
+  15%  { opacity: 0.9; }
+  60%  { opacity: 0.7; width: var(--sp-len, 200px); }
+  100% { opacity: 0; width: var(--sp-len, 200px); }
+}
+
+.reveal-timefreeze {
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 4px,
+    rgba(255,58,0,0.04) 4px,
+    rgba(255,58,0,0.04) 5px
+  );
+  animation: timefreezeFlicker 0.08s steps(1) infinite;
+}
+@keyframes timefreezeFlicker {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.reveal-chroma {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.chroma-layer {
+  position: absolute; inset: 0;
+  animation: chromaShift var(--ch-dur, 2s) ease-in-out forwards var(--ch-delay, 0s);
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+@keyframes chromaShift {
+  0%   { opacity: 0; transform: translate(0,0); }
+  20%  { opacity: 0.35; }
+  50%  { opacity: 0.25; transform: translate(var(--ch-x,4px), var(--ch-y,0px)); }
+  80%  { opacity: 0.15; }
+  100% { opacity: 0; }
+}
+
+/* ── ABSOLUTE: universe reset ── */
+.reveal-absolute-white {
+  position: absolute; inset: 0;
+  background: white;
+  opacity: 0;
+  animation: absoluteWhiteIn var(--aw-dur, 1s) ease-in-out forwards var(--aw-delay, 0s);
+}
+@keyframes absoluteWhiteIn {
+  0%   { opacity: 0; }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.reveal-godray {
+  position: absolute; left: 50%; top: 50%;
+  width: 3px;
+  transform-origin: bottom center;
+  animation: godrayReveal var(--gr-dur, 2s) ease-out forwards var(--gr-delay, 0s);
+  opacity: 0;
+  border-radius: 999px;
+}
+@keyframes godrayReveal {
+  0%   { opacity: 0; height: 0; }
+  15%  { opacity: 0.6; }
+  40%  { opacity: 0.4; height: 60vh; }
+  80%  { opacity: 0.15; }
+  100% { opacity: 0; height: 70vh; }
+}
+
+.reveal-absolute-ring {
+  position: absolute; left: 50%; top: 50%;
+  border-radius: 50%;
+  border: 2px solid white;
+  width: 0; height: 0;
+  transform: translate(-50%,-50%);
+  animation: absoluteRing var(--ar-dur, 1.5s) ease-out forwards var(--ar-delay, 0s);
+  box-shadow: 0 0 20px white, 0 0 60px #e8e0ff;
+  opacity: 0;
+}
+@keyframes absoluteRing {
+  0%   { width: 0; height: 0; opacity: 0.9; }
+  50%  { opacity: 0.5; }
+  100% { width: 300vw; height: 300vw; opacity: 0; }
+}
+
+.reveal-implosion {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%,-50%);
+  width: 100vw; height: 100vh;
+  border-radius: 50%;
+  animation: implosionPull var(--ip-dur, 0.8s) cubic-bezier(0.7,0,1,0.5) forwards var(--ip-delay, 0s);
+  background: radial-gradient(circle, transparent 20%, black 100%);
+  opacity: 0;
+}
+@keyframes implosionPull {
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(3); }
+  30%  { opacity: 0.7; }
+  80%  { opacity: 0.5; transform: translate(-50%,-50%) scale(0.1); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(0); }
+}
+
+.reveal-static {
+  position: absolute; inset: 0; pointer-events: none;
+  animation: staticNoise 0.06s steps(1) infinite var(--st-delay, 0s);
+  opacity: 0;
+}
+@keyframes staticNoise {
+  0%   { opacity: 0; background-position: 0% 0%; }
+  25%  { opacity: 0.08; background-position: 30% 70%; }
+  50%  { opacity: 0; background-position: 60% 20%; }
+  75%  { opacity: 0.06; background-position: 90% 50%; }
+  100% { opacity: 0; }
+}
+
+/* Starfield burst for Celestial */
+.reveal-star {
+  position: absolute; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  animation: starShoot var(--ss-dur, 0.8s) ease-out forwards;
+  transform-origin: center center;
+}
+@keyframes starShoot {
+  from { opacity: 1; transform: translate(0,0) scale(1.5); }
+  to   { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0.2); }
+}
+
+/* Legendary shockwave */
+.legendary-shockwave {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 4px solid currentColor;
+  width: 0; height: 0;
+  animation: legendaryShock 0.8s cubic-bezier(0.2,0.8,0.4,1) forwards;
+  box-shadow: 0 0 20px currentColor;
+}
+@keyframes legendaryShock {
+  from { width: 0; height: 0; opacity: 1; }
+  to   { width: 200vw; height: 200vw; opacity: 0; }
+}
+
+/* Mythic rose window */
+.reveal-rose {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 0; height: 0;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  box-shadow: 0 0 30px currentColor, inset 0 0 30px currentColor;
+  animation: roseExpand 1s ease-out forwards;
+}
+@keyframes roseExpand {
+  0%   { width: 0; height: 0; opacity: 0.9; }
+  50%  { opacity: 0.6; }
+  100% { width: 160vw; height: 160vw; opacity: 0; }
+}
+
+/* Screen flash for legendary */
+.reveal-flash {
+  position: absolute; inset: 0;
+  background: white;
+  animation: flashOut var(--fl-dur, 0.3s) ease-out forwards;
+}
+@keyframes flashOut {
+  from { opacity: var(--fl-op, 0.8); }
+  to   { opacity: 0; }
+}
+
+/* ── DEV MODE ── */
+.dev-section-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+.dev-filter-row {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.dev-tier-btn {
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text-dim);
+}
+.dev-tier-btn:hover { background: var(--bg2); color: var(--text); }
+.dev-tier-btn.active { background: var(--bg2); border-color: currentColor; font-weight: 600; }
+
+.dev-search-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-bright);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  padding: 0.55rem 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 0.75rem;
+}
+.dev-search-input:focus { border-color: #f43f5e66; }
+
+.dev-aura-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.4rem;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.dev-aura-grid::-webkit-scrollbar { width: 5px; }
+.dev-aura-grid::-webkit-scrollbar-track { background: var(--bg); border-radius: 3px; }
+.dev-aura-grid::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+
+.dev-aura-chip {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dev-aura-chip:hover { border-color: var(--border-bright); background: var(--bg2); transform: translateY(-1px); }
+.dev-aura-chip.selected { border-color: currentColor; background: var(--bg2); box-shadow: 0 0 10px rgba(255,255,255,0.05); }
+
+.dev-preview-stage {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem 1rem 1rem;
+  margin-bottom: 1rem;
+}
+.dev-preview-inner {
+  position: relative;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+.dev-preview-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.dev-meta-chip {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  color: var(--text-dim);
+  background: var(--bg2);
+}
+.dev-font-label { font-family: 'DM Mono', monospace; color: #7dd3fc; border-color: #1d6fd455; }
+
+.dev-anim-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.dev-anim-btn {
+  flex: 1;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid #f43f5e44;
+  border-radius: 6px;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+.dev-anim-btn:hover:not(:disabled) { background: var(--bg2); border-color: #f43f5e88; color: #f43f5e; }
+.dev-anim-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.dev-anim-btn-gilded { border-color: var(--gold-dim); color: var(--text-dim); }
+.dev-anim-btn-gilded:hover:not(:disabled) { border-color: var(--gold); color: var(--gold) !important; background: rgba(240,192,96,0.07) !important; }
+.dev-anim-btn-gilded.gilded-on { border-color: var(--gold); color: var(--gold); background: rgba(240,192,96,0.07); }
+
+/* ── AURA TITLE (under name in roll display) ── */
+.roll-aura-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-top: 0.35rem;
+  min-height: 1rem;
+  transition: all 0.4s;
+}
+
+/* ── REVEAL TITLE ANIMATION ── */
+.reveal-title-line {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(0.7rem, 1.5vw, 1rem);
+  letter-spacing: 0.55em;
+  text-transform: uppercase;
+  opacity: 0;
+  margin-bottom: 0.6rem;
+  animation: revealTitleIn var(--rt-title-dur, 1.2s) ease forwards var(--rt-title-delay, 0s);
+}
+@keyframes revealTitleIn {
+  0%   { opacity: 0; letter-spacing: 0.8em; filter: blur(8px); }
+  20%  { opacity: 0.85; letter-spacing: 0.55em; filter: blur(0); }
+  75%  { opacity: 0.85; }
+  100% { opacity: 0; letter-spacing: 0.4em; filter: blur(3px); }
+}
+
+/* name fades in AFTER title */
+.reveal-name-delayed {
+  opacity: 0;
+  animation: revealNameIn var(--rt-dur, 1.4s) ease forwards var(--rt-delay, 0.2s);
+}
+@keyframes revealNameIn {
+  0%   { opacity: 0; transform: scale(0.4); filter: blur(20px); }
+  20%  { opacity: 1; transform: scale(1.08); filter: blur(0); }
+  40%  { opacity: 1; transform: scale(1.0); }
+  80%  { opacity: 1; transform: scale(1.0); }
+  100% { opacity: 0; transform: scale(1.15); filter: blur(4px); }
+}
+
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="flash"></div>
+<div id="reveal-overlay"></div>
+
+<div id="app">
+  <header>
+    <h1 class="game-title">NOKO'S RNG</h1>
+    <p class="game-subtitle">ENHANCED EDITION</p>
+  </header>
+
+  <div class="stat-bar">
+    <div class="stat-chip"><span class="label">Rolls</span><span class="val" id="stat-rolls">0</span></div>
+    <div class="stat-chip"><span class="label">Luck</span><span class="val luck" id="stat-luck">1.00×</span></div>
+    <div class="stat-chip"><span class="label">Coins</span><span class="val gold" id="stat-coins">0</span></div>
+    <div class="stat-chip"><span class="label">Auras</span><span class="val" id="stat-auras">0</span></div>
+    <div class="stat-chip"><span class="label">Rarest</span><span class="val" id="stat-rarest">—</span></div>
+    <div class="stat-chip"><span class="label">Biome</span><span class="val green" id="stat-biome">none</span></div>
+  </div>
+
+  <div class="nav-bar">
+    <button class="nav-btn active" onclick="setPanel('roll')">🎲 Roll</button>
+    <button class="nav-btn" onclick="setPanel('inv')">🎒 Inventory</button>
+    <button class="nav-btn" onclick="setPanel('collect')">📚 Collection</button>
+    <button class="nav-btn" onclick="setPanel('craft')">🛠️ Craft</button>
+    <button class="nav-btn" onclick="setPanel('bank')">💰 Bank</button>
+    <button class="nav-btn" onclick="setPanel('auto')">⚙️ Auto</button>
+    <button class="nav-btn" onclick="saveGame()" style="border-color:var(--gold-dim);color:var(--gold)">💾 Save</button>
+  </div>
+
+  <!-- ROLL PANEL -->
+  <div id="panel-roll" class="panel active">
+    <div class="grid">
+      <div class="card roll-card">
+        <div class="roll-display">
+          <div class="aura-stage">
+            <canvas id="aura-canvas"></canvas>
+            <div id="roll-aura-name" class="roll-aura-name">Ready to roll...</div>
+          </div>
+          <div id="roll-aura-title" class="roll-aura-title"></div>
+          <div id="roll-tier-badge"></div>
+          <div id="roll-chance" class="roll-chance"></div>
+        </div>
+        <div class="roll-actions">
+          <button class="btn btn-roll" onclick="doRoll()" id="roll-btn">Roll (R)</button>
+          <button class="btn" onclick="toggleQuick()" id="quick-btn">⚡ Quick: OFF</button>
+          <div style="height:1px;background:var(--border);margin:0.1rem 0"></div>
+          <div class="potion-use-row">
+            <button class="pot-quick" id="pot-quick-p1" onclick="usePotion('p1')" title="Use Minor Luck Potion">🧪 Minor</button>
+            <button class="pot-quick" id="pot-quick-p3" onclick="usePotion('p3')" title="Use Greater Luck Potion">🧪 Greater</button>
+            <button class="pot-quick" id="pot-quick-p5" onclick="usePotion('p5')" title="Use Mythic Luck Potion">✨ Mythic</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-title">Active Buff</h3>
+        <div id="buff-display" class="no-buff">No potion active</div>
+        <div id="buff-bar-wrap" class="buff-bar" style="display:none">
+          <div class="buff-label-row">
+            <span class="buff-name" id="buff-name"></span>
+            <span class="buff-time" id="buff-time"></span>
+          </div>
+          <div class="buff-track"><div class="buff-fill" id="buff-fill" style="width:100%"></div></div>
+        </div>
+
+        <h3 class="card-title" style="margin-top:1rem">Active Biome</h3>
+        <div id="biome-display" class="no-buff">No biome active</div>
+        <div id="biome-bar-wrap" class="buff-bar" style="display:none;border-color:rgba(134,239,172,0.2)">
+          <div class="buff-label-row">
+            <span class="buff-name" id="biome-name"></span>
+            <span class="buff-time" id="biome-time"></span>
+          </div>
+          <div class="buff-track"><div class="buff-fill biome-fill" id="biome-fill" style="width:100%"></div></div>
+          <div class="biome-boosted-row" id="biome-boosted"></div>
+        </div>
+
+        <h3 class="card-title" style="margin-top:1rem">Activity Log</h3>
+        <div class="log-box" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVENTORY PANEL -->
+  <div id="panel-inv" class="panel">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" onclick="setInvTab('auras')">Auras</button>
+        <button class="tab" onclick="setInvTab('potions')">Potions</button>
+      </div>
+      <div id="inv-auras"></div>
+      <div id="inv-potions" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- COLLECTION PANEL -->
+  <div id="panel-collect" class="panel">
+    <div class="card">
+      <h3 class="card-title">Aura Collection</h3>
+      <div class="collection-stats">
+        <div class="collection-progress"><div id="col-bar"></div></div>
+        <div class="collection-count"><span id="col-found">0</span>/<span id="col-total">0</span></div>
+      </div>
+      <div id="col-filters" class="col-filters"></div>
+      <div id="col-content"></div>
+    </div>
+  </div>
+
+  <!-- CRAFT PANEL -->
+  <div id="panel-craft" class="panel">
+    <div class="card">
+      <h3 class="card-title">Glove Workshop</h3>
+      <div id="gloves-grid" class="gloves-grid"></div>
+    </div>
+  </div>
+
+  <!-- BANK PANEL -->
+  <div id="panel-bank" class="panel">
+    <div class="card">
+      <h3 class="card-title">Tier Values</h3>
+      <div id="tier-coins" class="tier-coin-list"></div>
+      <h3 class="card-title" style="margin-top:1.5rem">Potion Shop</h3>
+      <div id="shop-grid" class="shop-grid"></div>
+    </div>
+  </div>
+
+  <!-- AUTO PANEL -->
+  <div id="panel-auto" class="panel">
+    <div class="card">
+      <h3 class="card-title">Auto Roll</h3>
+      <div class="auto-controls">
+        <div class="auto-label">Speed</div>
+        <div id="auto-options" class="auto-options"></div>
+      </div>
+      <div id="auto-status" class="auto-status">Auto roll is OFF</div>
+    </div>
+  </div>
+
+  <!-- DEV PANEL -->
+  <div id="panel-dev" class="panel">
+    <div class="card" style="border-color:#f43f5e33">
+      <h3 class="card-title" style="color:#f43f5e;border-color:#f43f5e22">🛠 Developer Preview Mode</h3>
+
+      <!-- Tier filter row -->
+      <div class="dev-section-label">Filter by Tier</div>
+      <div id="dev-tier-filters" class="dev-filter-row"></div>
+
+      <!-- Search -->
+      <div class="dev-section-label" style="margin-top:1rem">Search Aura</div>
+      <input id="dev-search" class="dev-search-input" type="text" placeholder="Type aura name..." oninput="devFilter()" autocomplete="off" />
+
+      <!-- Aura grid -->
+      <div id="dev-aura-grid" class="dev-aura-grid"></div>
+
+      <!-- Preview stage -->
+      <div class="dev-section-label" style="margin-top:1.5rem">Live Preview</div>
+      <div class="dev-preview-stage">
+        <div class="dev-preview-inner">
+          <canvas id="dev-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;border-radius:12px;"></canvas>
+          <div id="dev-preview-name" class="roll-aura-name" style="position:relative;z-index:2;font-size:clamp(1.4rem,3.5vw,2.6rem)">Select an aura →</div>
+        </div>
+        <div id="dev-preview-title" class="roll-aura-title" style="text-align:center;margin-bottom:0.5rem"></div>
+        <div class="dev-preview-meta">
+          <div id="dev-preview-tier" class="dev-meta-chip"></div>
+          <div id="dev-preview-chance" class="dev-meta-chip"></div>
+          <div id="dev-preview-font" class="dev-meta-chip dev-font-label"></div>
+        </div>
+      </div>
+
+      <!-- Animation trigger -->
+      <div class="dev-anim-row">
+        <button class="dev-anim-btn" id="dev-anim-btn" onclick="devTriggerAnim()" disabled>▶ Play Opening Animation</button>
+        <button class="dev-anim-btn dev-anim-btn-gilded" id="dev-gilded-btn" onclick="devPreviewGilded()" disabled>⭐ Toggle Gilded</button>
+        <button class="dev-anim-btn" onclick="devCycleAll()" id="dev-cycle-btn">⟳ Cycle All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const TIER_ORDER = ['COMMON','UNCOMMON','RARE','EPIC','LEGENDARY','MYTHIC','DIVINE','CELESTIAL','COSMIC','TRANSCENDENT','PRIMORDIAL','ETERNAL','ABSOLUTE'];
+const TIER_COLORS = {
+  COMMON: '#6b7280',
+  UNCOMMON: '#a78bfa',
+  RARE: '#3b82f6',
+  EPIC: '#10b981',
+  LEGENDARY: '#f59e0b',
+  MYTHIC: '#ec4899',
+  DIVINE: '#f0c060',
+  CELESTIAL: '#22d3ee',
+  COSMIC: '#a855f7',
+  TRANSCENDENT: '#ffffff',
+  PRIMORDIAL: '#ff0080',
+  ETERNAL: '#ff3a00',
+  ABSOLUTE: '#e8e0ff',
+};
+
+// [tier, name, chance (1 in N), color, gildedChance (1 in N, 0=none)]
+const AURAS = [
+  // COMMON (1/2)
+  ['COMMON','Breeze',2,'#9ca3af',0],
+  ['COMMON','Spark',2,'#fbbf24',0],
+  ['COMMON','Ripple',2,'#60a5fa',0],
+  ['COMMON','Ember',2,'#f97316',0],
+  ['COMMON','Mist',2,'#a5b4fc',0],
+  ['COMMON','Pebble',2,'#78716c',0],
+  ['COMMON','Leaf',2,'#4ade80',0],
+  ['COMMON','Drizzle',2,'#38bdf8',0],
+
+  // UNCOMMON (1/8)
+  ['UNCOMMON','Flame',8,'#fb923c',50],
+  ['UNCOMMON','Frost',8,'#7dd3fc',50],
+  ['UNCOMMON','Thunder',8,'#fef08a',50],
+  ['UNCOMMON','Quake',8,'#a78bfa',50],
+  ['UNCOMMON','Gale',8,'#86efac',50],
+  ['UNCOMMON','Torrent',8,'#67e8f9',50],
+  ['UNCOMMON','Shimmer',8,'#fde047',50],
+  ['UNCOMMON','Shadow',8,'#6366f1',50],
+  ['UNCOMMON','Bloom',8,'#f9a8d4',50],
+  ['UNCOMMON','Tide',8,'#3b82f6',50],
+
+  // RARE (1/50)
+  ['RARE','Blaze',50,'#fb7185',200],
+  ['RARE','Glacier',50,'#7dd3fc',200],
+  ['RARE','Storm',50,'#fde047',200],
+  ['RARE','Tremor',50,'#d8b4fe',200],
+  ['RARE','Typhoon',50,'#6ee7b7',200],
+  ['RARE','Cascade',50,'#22d3ee',200],
+  ['RARE','Radiance',50,'#fbbf24',200],
+  ['RARE','Eclipse',50,'#818cf8',200],
+  ['RARE','Blossom',50,'#f472b6',200],
+  ['RARE','Tsunami',50,'#0ea5e9',200],
+  ['RARE','Aurora',50,'#a78bfa',200],
+  ['RARE','Voltage',50,'#fef3c7',200],
+
+  // EPIC (1/250)
+  ['EPIC','Inferno',250,'#dc2626',500],
+  ['EPIC','Permafrost',250,'#06b6d4',500],
+  ['EPIC','Tempest',250,'#facc15',500],
+  ['EPIC','Seismic',250,'#c084fc',500],
+  ['EPIC','Cyclone',250,'#34d399',500],
+  ['EPIC','Deluge',250,'#0ea5e9',500],
+  ['EPIC','Brilliance',250,'#f59e0b',500],
+  ['EPIC','Void',250,'#6366f1',500],
+  ['EPIC','Verdant',250,'#22c55e',500],
+  ['EPIC','Abyss',250,'#1e3a8a',500],
+  ['EPIC','Sunburst',250,'#fbbf24',500],
+  ['EPIC','Moonlight',250,'#c7d2fe',500],
+  ['EPIC','Stormfront',250,'#0891b2',500],
+  ['EPIC','Wildfire',250,'#f97316',500],
+
+  // LEGENDARY (1/1000)
+  ['LEGENDARY','Phoenix',1000,'#dc2626',2000],
+  ['LEGENDARY','Kraken',1000,'#0c4a6e',2000],
+  ['LEGENDARY','Dragon',1000,'#ea580c',2000],
+  ['LEGENDARY','Leviathan',1000,'#0369a1',2000],
+  ['LEGENDARY','Behemoth',1000,'#78350f',2000],
+  ['LEGENDARY','Celestial',1000,'#fbbf24',2000],
+  ['LEGENDARY','Nebula',1000,'#7c3aed',2000],
+  ['LEGENDARY','Supernova',1000,'#fef3c7',2000],
+  ['LEGENDARY','Quantum',1000,'#a855f7',2000],
+  ['LEGENDARY','Prismatic',1000,'#e879f9',2000],
+  ['LEGENDARY','Zenith',1000,'#fcd34d',2000],
+  ['LEGENDARY','Apex',1000,'#fb923c',2000],
+  ['LEGENDARY','Stellar',1000,'#fef9c3',2000],
+  ['LEGENDARY','Enigma',1000,'#6366f1',2000],
+  ['LEGENDARY','Paragon',1000,'#fbbf24',2000],
+
+  // MYTHIC (1/5000)
+  ['MYTHIC','Titan',5000,'#ec4899',10000],
+  ['MYTHIC','Hydra',5000,'#06b6d4',10000],
+  ['MYTHIC','Chimera',5000,'#f43f5e',10000],
+  ['MYTHIC','Seraphim',5000,'#fef08a',10000],
+  ['MYTHIC','Omega',5000,'#a855f7',10000],
+  ['MYTHIC','Genesis',5000,'#22d3ee',10000],
+  ['MYTHIC','Sovereign',5000,'#f59e0b',10000],
+  ['MYTHIC','Infinity',5000,'#c084fc',10000],
+  ['MYTHIC','Eternal',5000,'#e0e7ff',10000],
+  ['MYTHIC','Immortal',5000,'#fef3c7',10000],
+  ['MYTHIC','Eldritch',5000,'#312e81',10000],
+  ['MYTHIC','Arcane',5000,'#7c3aed',10000],
+  ['MYTHIC','Absolute',5000,'#fef9c3',10000],
+
+  // DIVINE (1/25000)
+  ['DIVINE','Ascendant',25000,'#fbbf24',50000],
+  ['DIVINE','Godhood',25000,'#fef3c7',50000],
+  ['DIVINE','Transcendence',25000,'#e0e7ff',50000],
+  ['DIVINE','Nexus',25000,'#a855f7',50000],
+  ['DIVINE','Omnipotent',25000,'#fef08a',50000],
+  ['DIVINE','Empyrean',25000,'#fde047',50000],
+  ['DIVINE','Aetherial',25000,'#c7d2fe',50000],
+  ['DIVINE','Sanctified',25000,'#fef9c3',50000],
+
+  // CELESTIAL (1/100000)
+  ['CELESTIAL','Starborn',100000,'#22d3ee',200000],
+  ['CELESTIAL','Cosmic Dust',100000,'#a855f7',200000],
+  ['CELESTIAL','Constellation',100000,'#fef9c3',200000],
+  ['CELESTIAL','Galaxy',100000,'#6366f1',200000],
+  ['CELESTIAL','Universe',100000,'#c7d2fe',200000],
+  ['CELESTIAL','Void Walker',100000,'#1e1b4b',200000],
+
+  // COSMIC (1/500000)
+  ['COSMIC','Singularity',500000,'#a855f7',1000000],
+  ['COSMIC','Event Horizon',500000,'#1e1b4b',1000000],
+  ['COSMIC','Dark Matter',500000,'#312e81',1000000],
+  ['COSMIC','Multiverse',500000,'#c084fc',1000000],
+  ['COSMIC','Big Bang',500000,'#fef3c7',1000000],
+  ['COSMIC','Xenogenesis',500000,'#06b6d4',1000000],
+  ['COSMIC','Nullspace',500000,'#0f0f1a',1000000],
+  ['COSMIC','Paradox',500000,'#7c3aed',1000000],
+  ['COSMIC','Entropy',500000,'#475569',1000000],
+  ['COSMIC','Hypernova',500000,'#fbbf24',1000000],
+
+  // TRANSCENDENT (1/2000000)
+  ['TRANSCENDENT','Reality Bender',2000000,'#ffffff',5000000],
+  ['TRANSCENDENT','Dimensional Rift',2000000,'#e0e7ff',5000000],
+  ['TRANSCENDENT','Time Eternal',2000000,'#fef9c3',5000000],
+  ['TRANSCENDENT','Eschaton',2000000,'#f0e6ff',5000000],
+  ['TRANSCENDENT','Axiom',2000000,'#c7d2fe',5000000],
+  ['TRANSCENDENT','Unbound',2000000,'#e2e8f0',5000000],
+  ['TRANSCENDENT','Phantasm',2000000,'#a5b4fc',5000000],
+  ['TRANSCENDENT','Culmination',2000000,'#f8fafc',5000000],
+
+  // PRIMORDIAL (1/10000000)
+  ['PRIMORDIAL','Origin',10000000,'#ff0080',25000000],
+  ['PRIMORDIAL','The First',10000000,'#fef3c7',25000000],
+  ['PRIMORDIAL','Annihilation',10000000,'#dc2626',25000000],
+  ['PRIMORDIAL','Preordained',10000000,'#fde68a',25000000],
+  ['PRIMORDIAL','Architect',10000000,'#f0c060',25000000],
+  ['PRIMORDIAL','Unnamed',10000000,'#94a3b8',25000000],
+  ['PRIMORDIAL','The Void',10000000,'#09090b',25000000],
+
+  // ETERNAL (1/100000000)
+  ['ETERNAL','Oblivion',100000000,'#ff3a00',250000000],
+  ['ETERNAL','The Undying',100000000,'#c0392b',250000000],
+  ['ETERNAL','Ragnarok',100000000,'#ff6b00',250000000],
+  ['ETERNAL','Apocalypse',100000000,'#b91c1c',250000000],
+  ['ETERNAL','Purgatory',100000000,'#7f1d1d',250000000],
+  ['ETERNAL','Damnation',100000000,'#ff1a1a',250000000],
+  ['ETERNAL','Armageddon',100000000,'#ea580c',250000000],
+  ['ETERNAL','Hellfire',100000000,'#ff4500',250000000],
+
+  // ABSOLUTE (1/1000000000)
+  ['ABSOLUTE','The End',1000000000,'#e8e0ff',0],
+  ['ABSOLUTE','God',1000000000,'#ffffff',0],
+];
+
+const AURA_MAP = {};
+AURAS.forEach(a => AURA_MAP[a[1]] = a);
+
+const TIER_COINS = {
+  COMMON: 0,
+  UNCOMMON: 0,
+  RARE: 1,
+  EPIC: 3,
+  LEGENDARY: 15,
+  MYTHIC: 75,
+  DIVINE: 400,
+  CELESTIAL: 2500,
+  COSMIC: 20000,
+  TRANSCENDENT: 200000,
+  PRIMORDIAL: 2000000,
+  ETERNAL: 25000000,
+  ABSOLUTE: 500000000,
+};
+
+const POTIONS = [
+  {id:'p1', label:'Minor Luck Potion',   icon:'🧪', mult:1.5,  secs:45},
+  {id:'p2', label:'Luck Potion',          icon:'🧪', mult:2,    secs:60},
+  {id:'p3', label:'Greater Luck Potion',  icon:'🧪', mult:3,    secs:75},
+  {id:'p4', label:'Superior Luck Potion', icon:'🧪', mult:4,    secs:90},
+  {id:'p5', label:'Mythic Luck Potion',   icon:'✨', mult:6,    secs:120},
+  {id:'p6', label:'Divine Luck Potion',   icon:'✨', mult:10,   secs:150},
+  {id:'p7', label:'Cosmic Luck Elixir',   icon:'🌟', mult:20,   secs:180},
+];
+const POTION_MAP = {};
+POTIONS.forEach(p => POTION_MAP[p.id] = p);
+
+const SHOP_POTIONS = [
+  {id:'p1', coinCost:20},
+  {id:'p2', coinCost:80},
+  {id:'p3', coinCost:300},
+  {id:'p4', coinCost:1200},
+  {id:'p5', coinCost:6000},
+  {id:'p6', coinCost:35000},
+  {id:'p7', coinCost:200000},
+];
+
+const GLOVES = [
+  {id:'g1',  name:'Novice Glove',       luckMult:1.1,  recipe:{Breeze:10, Spark:10}},
+  {id:'g2',  name:'Apprentice Glove',   luckMult:1.2,  recipe:{Flame:5,   Frost:5,   Thunder:5}},
+  {id:'g3',  name:'Adept Glove',        luckMult:1.35, recipe:{Blaze:4,   Glacier:4, Storm:4}},
+  {id:'g4',  name:'Expert Glove',       luckMult:1.5,  recipe:{Inferno:3, Permafrost:3, Tempest:3}},
+  {id:'g5',  name:'Master Glove',       luckMult:1.75, recipe:{Phoenix:2, Dragon:2,  Kraken:2}},
+  {id:'g6',  name:'Legendary Glove',    luckMult:2.0,  recipe:{Titan:2,   Hydra:2,   Chimera:2}},
+  {id:'g7',  name:'Divine Glove',       luckMult:2.5,  recipe:{Ascendant:1, Godhood:1, Nexus:1}},
+  {id:'g8',  name:'Celestial Glove',    luckMult:3.0,  recipe:{Starborn:1, 'Cosmic Dust':1, Galaxy:1}},
+  {id:'g9',  name:'Cosmic Glove',       luckMult:4.0,  recipe:{Singularity:1, 'Event Horizon':1, 'Dark Matter':1}},
+  {id:'g10', name:'Transcendent Glove', luckMult:5.0,  recipe:{'Reality Bender':1, 'Dimensional Rift':1}},
+  {id:'g11', name:'Primordial Glove',   luckMult:7.0,  recipe:{Origin:1, 'The First':1}},
+];
+
+// ── BIOMES ────────────────────────────────────────────────────────────────────
+const BIOMES = [
+  {
+    id:'rainy', name:'Rainstorm', icon:'🌧️', desc:'Heavy rain blesses water auras',
+    duration:90, spawnChance:0.18, boosted:['Torrent','Frost','Glacier','Tsunami','Deluge','Cascade'],
+    luckMult:3.5, hueShift:200, overlayColor:'rgba(40,90,180,0.13)',
+    particleColor:'#60a5fa', particleType:'rain',
+  },
+  {
+    id:'windy', name:'Gale Force', icon:'💨', desc:'Howling winds empower storm auras',
+    duration:75, spawnChance:0.20, boosted:['Gale','Tempest','Storm','Typhoon','Cyclone','Stormfront'],
+    luckMult:3.0, hueShift:180, overlayColor:'rgba(100,200,220,0.10)',
+    particleColor:'#bae6fd', particleType:'wind',
+  },
+  {
+    id:'volcanic', name:'Eruption', icon:'🌋', desc:'Volcanic heat ignites fire auras',
+    duration:60, spawnChance:0.14, boosted:['Ember','Blaze','Inferno','Wildfire','Phoenix','Dragon'],
+    luckMult:4.0, hueShift:15, overlayColor:'rgba(200,60,20,0.13)',
+    particleColor:'#f97316', particleType:'ember',
+  },
+  {
+    id:'eclipse', name:'Eclipse', icon:'🌑', desc:'Darkness amplifies shadow auras',
+    duration:80, spawnChance:0.12, boosted:['Shadow','Eclipse','Void','Abyss','Eldritch','Void Walker'],
+    luckMult:4.5, hueShift:270, overlayColor:'rgba(80,0,120,0.15)',
+    particleColor:'#a78bfa', particleType:'void',
+  },
+  {
+    id:'blizzard', name:'Blizzard', icon:'❄️', desc:'Freezing winds empower ice auras',
+    duration:85, spawnChance:0.15, boosted:['Frost','Glacier','Permafrost','Blizzard','Glacial'],
+    luckMult:4.0, hueShift:210, overlayColor:'rgba(150,220,255,0.12)',
+    particleColor:'#e0f2fe', particleType:'snow',
+  },
+  {
+    id:'aurora', name:'Aurora Borealis', icon:'🌌', desc:'Cosmic lights bless rare celestial auras',
+    duration:120, spawnChance:0.08, boosted:['Aurora','Celestial','Starborn','Constellation','Galaxy','Stellar'],
+    luckMult:5.0, hueShift:150, overlayColor:'rgba(0,200,150,0.10)',
+    particleColor:'#67e8f9', particleType:'aurora',
+  },
+];
+const BIOME_MAP = Object.fromEntries(BIOMES.map(b => [b.id, b]));
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const S = {
+  rolls: 0,
+  coins: 0,
+  invAuras: {},
+  invPotions: {},
+  crafted: [],
+  glove: null,
+  biome: null,
+  potActive: null,
+  potEndTime: 0,
+  autoSpeed: 0,
+  quickRoll: false,
+  log: [{msg:'Welcome to Noko\'s RNG!', special:true}],
+};
+
+let autoInterval = null;
+let lastRoll = null;
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function fmtNum(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(2) + 'K';
+  return n.toString();
+}
+function fmtChance(c, luck) {
+  // Always display the raw base 1-in-N chance, unaffected by luck
+  const n = c;
+  if (n >= 1e9) return `1 in ${(n/1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `1 in ${(n/1e6).toFixed(2)}M`;
+  if (n >= 1e3) return `1 in ${(n/1e3).toFixed(1)}K`;
+  return `1 in ${n}`;
+}
+function totalLuck() {
+  let l = 1;
+  if (S.glove) {
+    const g = GLOVES.find(x => x.id === S.glove);
+    if (g) l *= g.luckMult;
+  }
+  if (S.potActive && Date.now() < S.potEndTime) {
+    const p = POTION_MAP[S.potActive];
+    if (p) l *= p.mult;
+  }
+  return l;
+}
+
+function biomeLuckFor(auraName) {
+  if (!S.biome) return 1.0;
+  const b = BIOME_MAP[S.biome.id];
+  if (!b || Date.now()/1000 >= S.biome.expires) return 1.0;
+  return b.boosted.includes(auraName) ? b.luckMult : 1.0;
+}
+
+function logPush(msg, special=false) {
+  S.log.unshift({msg, special});
+  if (S.log.length > 50) S.log.pop();
+}
+
+// ── ROLL ──────────────────────────────────────────────────────────────────────
+function pickAura(luck) {
+  const tiers = [...TIER_ORDER].reverse();
+  for (const tier of tiers) {
+    const candidates = AURAS.filter(a => a[0] === tier);
+    for (const a of candidates) {
+      const adjChance = a[2] / (luck * biomeLuckFor(a[1]));
+      if (Math.random() < 1/adjChance) {
+        const isGilded = a[4] > 0 && Math.random() < luck/(a[4]);
+        return {aura:a, gilded:isGilded};
+      }
+    }
+  }
+  return {aura:AURAS[0], gilded:false};
+}
+
+async function doRoll() {
+  if (!S.quickRoll) {
+    const btn = document.getElementById('roll-btn');
+    btn.disabled = true;
+    setTimeout(() => btn.disabled = false, 800);
+  }
+
+  const luck = totalLuck();
+  const result = pickAura(luck);
+  const [tier, name, rawChance, color, gildedChance] = result.aura;
+  const gilded = result.gilded;
+
+  S.rolls++;
+  S.invAuras[name] = (S.invAuras[name] || 0) + 1;
+
+  let coins = TIER_COINS[tier] || 0;
+  if (gilded && coins > 0) coins *= 5;
+  if (coins > 0) S.coins += coins;
+
+  lastRoll = {tier, name, color, gilded, rawChance, luck};
+
+  if (!S.quickRoll) {
+    await animateRoll({tier, name, color, gilded, rawChance, luck});
+  } else {
+    showRollResult({tier, name, color, gilded, rawChance, luck});
+  }
+
+  const coinStr = coins > 0 ? ` +${fmtNum(coins)}c` : '';
+  const msg = gilded
+    ? `Rolled ${name} (${tier}) [GILDED]${coinStr}`
+    : `Rolled ${name} (${tier})${coinStr}`;
+  logPush(msg, TIER_ORDER.indexOf(tier) >= 5);
+
+  renderAll();
+}
+
+// ── TIER FONT MAP (fallback) ──────────────────────────────────────────────────
+const TIER_FONT_CLASS = {
+  COMMON:       'font-common',
+  UNCOMMON:     'font-uncommon',
+  RARE:         'font-rare',
+  EPIC:         'font-epic',
+  LEGENDARY:    'font-legendary',
+  MYTHIC:       'font-mythic',
+  DIVINE:       'font-divine',
+  CELESTIAL:    'font-celestial',
+  COSMIC:       'font-cosmic',
+  TRANSCENDENT: 'font-transcendent',
+  PRIMORDIAL:   'font-primordial',
+  ETERNAL:      'font-eternal',
+  ABSOLUTE:     'font-absolute',
+};
+
+// ── PER-AURA FONT MAP ─────────────────────────────────────────────────────────
+const AURA_FONT_CLASS = {
+  // COMMON
+  'Breeze':'af-Breeze','Spark':'af-Spark','Ripple':'af-Ripple','Ember':'af-Ember',
+  'Mist':'af-Mist','Pebble':'af-Pebble','Leaf':'af-Leaf','Drizzle':'af-Drizzle',
+  // UNCOMMON
+  'Flame':'af-Flame','Frost':'af-Frost','Thunder':'af-Thunder','Quake':'af-Quake',
+  'Gale':'af-Gale','Torrent':'af-Torrent','Shimmer':'af-Shimmer','Shadow':'af-Shadow',
+  'Bloom':'af-Bloom','Tide':'af-Tide',
+  // RARE
+  'Blaze':'af-Blaze','Glacier':'af-Glacier','Storm':'af-Storm','Tremor':'af-Tremor',
+  'Typhoon':'af-Typhoon','Cascade':'af-Cascade','Radiance':'af-Radiance','Eclipse':'af-Eclipse',
+  'Blossom':'af-Blossom','Tsunami':'af-Tsunami','Aurora':'af-Aurora','Voltage':'af-Voltage',
+  // EPIC
+  'Inferno':'af-Inferno','Permafrost':'af-Permafrost','Tempest':'af-Tempest','Seismic':'af-Seismic',
+  'Cyclone':'af-Cyclone','Deluge':'af-Deluge','Brilliance':'af-Brilliance','Void':'af-Void',
+  'Verdant':'af-Verdant','Abyss':'af-Abyss','Sunburst':'af-Sunburst','Moonlight':'af-Moonlight',
+  'Stormfront':'af-Stormfront','Wildfire':'af-Wildfire',
+  // LEGENDARY
+  'Phoenix':'af-Phoenix','Kraken':'af-Kraken','Dragon':'af-Dragon','Leviathan':'af-Leviathan',
+  'Behemoth':'af-Behemoth','Celestial':'af-Celestial','Nebula':'af-Nebula','Supernova':'af-Supernova',
+  'Quantum':'af-Quantum','Prismatic':'af-Prismatic','Zenith':'af-Zenith','Apex':'af-Apex',
+  'Stellar':'af-Stellar','Enigma':'af-Enigma','Paragon':'af-Paragon',
+  // MYTHIC
+  'Titan':'af-Titan','Hydra':'af-Hydra','Chimera':'af-Chimera','Seraphim':'af-Seraphim',
+  'Omega':'af-Omega','Genesis':'af-Genesis','Sovereign':'af-Sovereign','Infinity':'af-Infinity',
+  'Eternal':'af-Eternal','Immortal':'af-Immortal','Eldritch':'af-Eldritch','Arcane':'af-Arcane',
+  'Absolute':'af-Absolute',
+  // DIVINE
+  'Ascendant':'af-Ascendant','Godhood':'af-Godhood','Transcendence':'af-Transcendence',
+  'Nexus':'af-Nexus','Omnipotent':'af-Omnipotent','Empyrean':'af-Empyrean',
+  'Aetherial':'af-Aetherial','Sanctified':'af-Sanctified',
+  // CELESTIAL
+  'Starborn':'af-Starborn','Cosmic Dust':'af-CosmicDust','Constellation':'af-Constellation',
+  'Galaxy':'af-Galaxy','Universe':'af-Universe','Void Walker':'af-VoidWalker',
+  // COSMIC
+  'Singularity':'af-Singularity','Event Horizon':'af-EventHorizon','Dark Matter':'af-DarkMatter',
+  'Multiverse':'af-Multiverse','Big Bang':'af-BigBang',
+  'Xenogenesis':'af-Xenogenesis','Nullspace':'af-Nullspace','Paradox':'af-Paradox',
+  'Entropy':'af-Entropy','Hypernova':'af-Hypernova',
+  // TRANSCENDENT
+  'Reality Bender':'af-RealityBender','Dimensional Rift':'af-DimensionalRift','Time Eternal':'af-TimeEternal',
+  'Eschaton':'af-Eschaton','Axiom':'af-Axiom','Unbound':'af-Unbound',
+  'Phantasm':'af-Phantasm','Culmination':'af-Culmination',
+  // PRIMORDIAL
+  'Origin':'af-Origin','The First':'af-TheFirst',
+  'Annihilation':'af-Annihilation','Preordained':'af-Preordained','Architect':'af-Architect',
+  'Unnamed':'af-Unnamed','The Void':'af-Void2',
+  // ETERNAL
+  'Oblivion':'af-Oblivion','The Undying':'af-TheUndying','Ragnarok':'af-Ragnarok',
+  'Apocalypse':'af-Apocalypse','Purgatory':'af-Purgatory','Damnation':'af-Damnation',
+  'Armageddon':'af-Armageddon','Hellfire':'af-Hellfire',
+  // ABSOLUTE
+  'The End':'af-TheEnd','God':'af-God',
+};
+
+// ── AURA TITLES (shown under name for LEGENDARY+) ─────────────────────────────
+const AURA_TITLES = {
+  // LEGENDARY
+  'Phoenix':        'Born from Ashes',
+  'Kraken':         'Terror of the Deep',
+  'Dragon':         'Ancient Flame',
+  'Leviathan':      'Serpent of the Abyss',
+  'Behemoth':       'Colossus Unchained',
+  'Celestial':      'Light of the Heavens',
+  'Nebula':         'Cradle of Stars',
+  'Supernova':      'Death of a Star',
+  'Quantum':        'Beyond Observation',
+  'Prismatic':      'All Colors Unbound',
+  'Zenith':         'The Highest Point',
+  'Apex':           'Above All Others',
+  'Stellar':        'Forged in Starfire',
+  'Enigma':         'The Unknowable',
+  'Paragon':        'Pinnacle of Virtue',
+  // MYTHIC
+  'Titan':          'God Among Giants',
+  'Hydra':          'Nine Heads, One Rage',
+  'Chimera':        'Unholy Composite',
+  'Seraphim':       'Six-Winged Flame',
+  'Omega':          'The Final Letter',
+  'Genesis':        'The First Breath',
+  'Sovereign':      'Lord of All Realms',
+  'Infinity':       'Without End',
+  'Eternal':        'Untouched by Time',
+  'Immortal':       'Death Cannot Hold',
+  'Eldritch':       'From Beyond the Veil',
+  'Arcane':         'Ancient Forbidden Art',
+  'Absolute':       'The Ultimate State',
+  // DIVINE
+  'Ascendant':      'Risen Above Mortality',
+  'Godhood':        'Divinity Achieved',
+  'Transcendence':  'Beyond the Physical',
+  'Nexus':          'Convergence of All',
+  'Omnipotent':     'All Power Incarnate',
+  'Empyrean':       'Realm of the Gods',
+  'Aetherial':      'Woven from Pure Light',
+  'Sanctified':     'Blessed by the Divine',
+  // CELESTIAL
+  'Starborn':       'Child of the Cosmos',
+  'Cosmic Dust':    'Remnants of Creation',
+  'Constellation':  'Written in the Sky',
+  'Galaxy':         'Billions of Worlds',
+  'Universe':       'Everything That Is',
+  'Void Walker':    'One Who Walks Between',
+  // COSMIC
+  'Singularity':    'Where Laws Break Down',
+  'Event Horizon':  'The Point of No Return',
+  'Dark Matter':    'The Invisible Fabric',
+  'Multiverse':     'Infinite Possibility',
+  'Big Bang':       'The First Moment',
+  'Xenogenesis':    'Born of Alien Fire',
+  'Nullspace':      'The Space Between Spaces',
+  'Paradox':        'Both True and False',
+  'Entropy':        'The Slow Unraveling',
+  'Hypernova':      'A Star Screaming Its Last',
+  // TRANSCENDENT
+  'Reality Bender': 'Rewriter of Rules',
+  'Dimensional Rift':'Tear in Existence',
+  'Time Eternal':   'Master of All Moments',
+  'Eschaton':       'The Final Reckoning',
+  'Axiom':          'The Truth That Cannot Be Denied',
+  'Unbound':        'Free of Every Chain',
+  'Phantasm':       'Real Enough to Kill You',
+  'Culmination':    'The Last of All Things',
+  // PRIMORDIAL
+  'Origin':         'Before All Things',
+  'The First':      'That Which Began It All',
+  'Annihilation':   'The Erasing of Everything',
+  'Preordained':    'It Was Always Going to Be This',
+  'Architect':      'Drawer of the First Blueprint',
+  'Unnamed':        '???',
+  'The Void':       'Older Than Darkness',
+  // ETERNAL
+  'Oblivion':       'The End of All Memory',
+  'The Undying':    'That Which Cannot Die',
+  'Ragnarok':       'Twilight of the Gods',
+  'Apocalypse':     'The Seal Has Been Broken',
+  'Purgatory':      'Waiting Between Lives',
+  'Damnation':      'No Redemption Awaits',
+  'Armageddon':     'The Last War',
+  'Hellfire':       'Burns Without Fuel',
+  // ABSOLUTE
+  'The End':        'After This, Nothing',
+  'God':            '.',
+};
+
+function showRollResult(r) {
+  const nameEl = document.getElementById('roll-aura-name');
+  const tierEl = document.getElementById('roll-tier-badge');
+  const chanceEl = document.getElementById('roll-chance');
+
+  nameEl.textContent = r.name;
+  nameEl.style.color = r.color;
+  nameEl.className = 'roll-aura-name';
+
+  // Show title for LEGENDARY+ auras
+  const titleEl = document.getElementById('roll-aura-title');
+  const auraTitle = AURA_TITLES[r.name];
+  if (titleEl) {
+    if (auraTitle) {
+      titleEl.textContent = auraTitle;
+      titleEl.style.color = r.color;
+    } else {
+      titleEl.textContent = '';
+    }
+  }
+
+  // Apply per-aura font (falls back to tier font)
+  const fontClass = AURA_FONT_CLASS[r.name] || TIER_FONT_CLASS[r.tier] || 'font-common';
+  nameEl.classList.add(fontClass);
+
+  if (TIER_ORDER.indexOf(r.tier) >= 6) {
+    nameEl.classList.add('rare-font');
+  }
+  if (TIER_ORDER.indexOf(r.tier) >= 9) {
+    nameEl.classList.add('transcendent-font');
+  }
+
+  tierEl.innerHTML = r.gilded
+    ? `<span class="roll-tier-badge" style="color:${r.color}">${r.tier}</span><span class="gilded-badge">⭐ GILDED</span>`
+    : `<span class="roll-tier-badge" style="color:${r.color}">${r.tier}</span>`;
+
+  chanceEl.textContent = fmtChance(r.rawChance, r.luck);
+
+  // Animated canvas for EPIC tier and above (index >= 4), static for lower
+  const tierIdx = TIER_ORDER.indexOf(r.tier);
+  if (tierIdx >= 4) {
+    startAuraAnim(r.color, r.tier);
+  } else {
+    stopAuraAnim();
+    drawAura(r.tier, r.color);
+  }
+}
+
+// ── OPENING ANIMATIONS ────────────────────────────────────────────────────────
+function triggerOpeningAnim(r) {
+  const tierIdx = TIER_ORDER.indexOf(r.tier);
+  if (tierIdx < 4) return; // Only LEGENDARY and above (idx 4 = LEGENDARY)
+
+  const ov = document.getElementById('reveal-overlay');
+  ov.innerHTML = '';
+  ov.className = 'active';
+  ov.style.color = r.color;
+
+  const fontClass = AURA_FONT_CLASS[r.name] || TIER_FONT_CLASS[r.tier] || 'font-legendary';
+
+  if (tierIdx === 4) {
+    // LEGENDARY: shockwave + flash
+    triggerLegendaryAnim(ov, r, fontClass);
+  } else if (tierIdx === 5) {
+    // MYTHIC: expanding rose rings + dramatic backdrop
+    triggerMythicAnim(ov, r, fontClass);
+  } else if (tierIdx === 6) {
+    // DIVINE: golden rays sweep
+    triggerDivineAnim(ov, r, fontClass);
+  } else if (tierIdx === 7) {
+    // CELESTIAL: starfield burst
+    triggerCelestialAnim(ov, r, fontClass);
+  } else if (tierIdx === 8) {
+    // COSMIC: void vortex implosion
+    triggerCosmicAnim(ov, r, fontClass);
+  } else if (tierIdx === 9) {
+    // TRANSCENDENT: reality cracks
+    triggerTranscendentAnim(ov, r, fontClass);
+  } else if (tierIdx >= 10 && tierIdx < 11) {
+    // PRIMORDIAL: full glitch/static cinematic
+    triggerPrimordialAnim(ov, r, fontClass);
+  } else if (tierIdx === 11) {
+    // ETERNAL: time freeze + spiral unravel
+    triggerEternalAnim(ov, r, fontClass);
+  } else if (tierIdx >= 12) {
+    // ABSOLUTE: universe reset
+    triggerAbsoluteAnim(ov, r, fontClass);
+  }
+
+  // Clean up after animation
+  const dur = tierIdx >= 12 ? 12000 : tierIdx >= 11 ? 9000 : tierIdx >= 10 ? 6500 : tierIdx >= 9 ? 5800 : tierIdx >= 7 ? 5000 : tierIdx >= 5 ? 4200 : 3500;
+  setTimeout(() => {
+    ov.innerHTML = '';
+    ov.className = '';
+  }, dur);
+}
+
+function makeBackdrop(dur='1.2s') {
+  const bd = document.createElement('div');
+  bd.className = 'reveal-backdrop';
+  bd.style.setProperty('--bd-dur', dur);
+  return bd;
+}
+
+function makeRevealText(r, fontClass, delay='0.3s', dur='1.4s') {
+  const wrap = document.createElement('div');
+  wrap.className = 'reveal-text-wrap';
+  wrap.style.setProperty('--rt-dur', dur);
+  wrap.style.setProperty('--rt-delay', delay);
+
+  const auraTitle = AURA_TITLES[r.name];
+  // Title appears first (starts sooner, fades before name peaks)
+  const titleDelayNum = parseFloat(delay) - 0.15;
+  const titleDelay = Math.max(0, titleDelayNum).toFixed(2) + 's';
+  const titleDur = (parseFloat(dur) * 0.75).toFixed(2) + 's';
+  // Name appears after title starts — give more breathing room
+  const nameDelay = (parseFloat(delay) + 1.0).toFixed(2) + 's';
+
+  const titleHTML = auraTitle
+    ? `<div class="reveal-title-line" style="color:${r.color};--rt-title-delay:${titleDelay};--rt-title-dur:${titleDur}">${auraTitle}.....</div>`
+    : `<div class="reveal-tier-label" style="color:${r.color}">${r.tier}</div>`;
+
+  wrap.innerHTML = `
+    ${titleHTML}
+    <div class="reveal-aura-name reveal-name-delayed ${fontClass}" style="color:${r.color};--rt-delay:${nameDelay};--rt-dur:${dur}">${r.name}${r.gilded?'<br><span style="font-size:0.45em;color:#f0c060;letter-spacing:0.3em;font-family:Cinzel,serif">✦ GILDED ✦</span>':''}</div>
+  `;
+
+  // Override the outer animation since we now handle it inside
+  wrap.style.opacity = '1';
+  wrap.style.animation = 'none';
+  wrap.style.transform = 'translate(-50%, -50%)';
+  return wrap;
+}
+
+function triggerLegendaryAnim(ov, r, fontClass) {
+  ov.appendChild(makeBackdrop('2.0s'));
+
+  // Shockwave ring
+  const sw = document.createElement('div');
+  sw.className = 'legendary-shockwave';
+  sw.style.color = r.color;
+  sw.style.borderColor = r.color;
+  ov.appendChild(sw);
+
+  // Flash
+  const fl = document.createElement('div');
+  fl.className = 'reveal-flash';
+  fl.style.setProperty('--fl-op', '0.55');
+  fl.style.setProperty('--fl-dur', '0.4s');
+  ov.appendChild(fl);
+
+  ov.appendChild(makeRevealText(r, fontClass, '0.35s', '2.8s'));
+}
+
+function triggerMythicAnim(ov, r, fontClass) {
+  ov.appendChild(makeBackdrop('2.4s'));
+
+  // Multiple expanding rose rings staggered
+  for (let i = 0; i < 4; i++) {
+    const rose = document.createElement('div');
+    rose.className = 'reveal-rose';
+    rose.style.color = r.color;
+    rose.style.borderColor = r.color;
+    rose.style.animationDelay = (i * 0.18) + 's';
+    rose.style.animationDuration = (0.9 + i * 0.1) + 's';
+    ov.appendChild(rose);
+  }
+
+  ov.appendChild(makeRevealText(r, fontClass, '0.5s', '3.0s'));
+}
+
+function triggerDivineAnim(ov, r, fontClass) {
+  ov.appendChild(makeBackdrop('2.8s'));
+
+  // Rays
+  const rays = document.createElement('div');
+  rays.className = 'reveal-rays';
+  rays.style.color = r.color;
+  ov.appendChild(rays);
+
+  // Flash
+  const fl = document.createElement('div');
+  fl.className = 'reveal-flash';
+  fl.style.setProperty('--fl-op', '0.7');
+  fl.style.setProperty('--fl-dur', '0.6s');
+  ov.appendChild(fl);
+
+  ov.appendChild(makeRevealText(r, fontClass, '0.6s', '3.2s'));
+}
+
+function triggerCelestialAnim(ov, r, fontClass) {
+  ov.appendChild(makeBackdrop('1.6s'));
+
+  // Burst of stars from center
+  const starCount = 60;
+  for (let i = 0; i < starCount; i++) {
+    const star = document.createElement('div');
+    star.className = 'reveal-star';
+    const angle = (i / starCount) * Math.PI * 2;
+    const dist = 40 + Math.random() * 50;
+    const sx = Math.cos(angle) * dist + 'vw';
+    const sy = Math.sin(angle) * dist + 'vh';
+    const size = 2 + Math.random() * 5;
+    star.style.cssText = `
+      left: 50%; top: 50%;
+      width: ${size}px; height: ${size}px;
+      margin: -${size/2}px;
+      color: ${r.color};
+      background: ${r.color};
+      box-shadow: 0 0 ${size*3}px ${r.color};
+      --sx: ${sx}; --sy: ${sy};
+      --ss-dur: ${0.5 + Math.random() * 0.6}s;
+      animation-delay: ${Math.random() * 0.2}s;
+    `;
+    ov.appendChild(star);
+  }
+
+  ov.appendChild(makeRevealText(r, fontClass, '0.6s', '3.4s'));
+}
+
+function triggerCosmicAnim(ov, r, fontClass) {
+  ov.appendChild(makeBackdrop('3.5s'));
+
+  // Vortex burst
+  const vortex = document.createElement('div');
+  vortex.className = 'reveal-vortex';
+  vortex.style.color = r.color;
+  vortex.style.background = `radial-gradient(circle, white 0%, ${r.color} 25%, transparent 65%)`;
+  vortex.style.boxShadow = `0 0 60px 30px ${r.color}`;
+  ov.appendChild(vortex);
+
+  // Additional shockwaves
+  for (let i = 0; i < 3; i++) {
+    const sw = document.createElement('div');
+    sw.className = 'legendary-shockwave';
+    sw.style.borderColor = r.color;
+    sw.style.animationDelay = (i * 0.25) + 's';
+    sw.style.animationDuration = '1.1s';
+    ov.appendChild(sw);
+  }
+
+  ov.appendChild(makeRevealText(r, fontClass, '0.7s', '3.6s'));
+}
+
+function triggerTranscendentAnim(ov, r, fontClass) {
+  ov.appendChild(makeBackdrop('4.0s'));
+
+  // Crack lines radiating from center
+  const crackContainer = document.createElement('div');
+  crackContainer.className = 'reveal-cracks';
+  crackContainer.style.color = r.color;
+  const crackCount = 12;
+  for (let i = 0; i < crackCount; i++) {
+    const crack = document.createElement('div');
+    crack.className = 'crack-line';
+    crack.style.color = r.color;
+    crack.style.background = `linear-gradient(to bottom, ${r.color}, transparent)`;
+    crack.style.boxShadow = `0 0 8px ${r.color}, 0 0 20px ${r.color}`;
+    crack.style.transform = `rotate(${(i / crackCount) * 360}deg)`;
+    crack.style.animationDelay = (Math.random() * 0.3) + 's';
+    crack.style.animationDuration = (0.4 + Math.random() * 0.3) + 's';
+    crackContainer.appendChild(crack);
+  }
+  ov.appendChild(crackContainer);
+
+  // Multiple flashes
+  for (let i = 0; i < 3; i++) {
+    const fl = document.createElement('div');
+    fl.className = 'reveal-flash';
+    fl.style.setProperty('--fl-op', (0.9 - i * 0.2).toString());
+    fl.style.setProperty('--fl-dur', '0.25s');
+    fl.style.animationDelay = (i * 0.15) + 's';
+    ov.appendChild(fl);
+  }
+
+  ov.appendChild(makeRevealText(r, fontClass, '0.8s', '4.0s'));
+}
+
+function triggerPrimordialAnim(ov, r, fontClass) {
+  ov.appendChild(makeBackdrop('5.0s'));
+
+  // Glitch bars
+  const glitch = document.createElement('div');
+  glitch.className = 'reveal-glitch';
+  glitch.style.color = r.color;
+  const barCount = 20;
+  for (let i = 0; i < barCount; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'glitch-bar';
+    bar.style.top = (Math.random() * 100) + '%';
+    bar.style.background = r.color;
+    bar.style.height = (1 + Math.random() * 5) + 'px';
+    bar.style.animationDelay = (Math.random() * 0.8) + 's';
+    bar.style.animationDuration = (0.8 + Math.random() * 0.8) + 's';
+    glitch.appendChild(bar);
+  }
+  ov.appendChild(glitch);
+
+  // Cosmic vortex
+  const vortex = document.createElement('div');
+  vortex.className = 'reveal-vortex';
+  vortex.style.background = `radial-gradient(circle, white 0%, ${r.color} 20%, #ff0080 40%, transparent 65%)`;
+  vortex.style.boxShadow = `0 0 80px 40px ${r.color}`;
+  ov.appendChild(vortex);
+
+  // Multiple staggered cracks
+  const crackContainer = document.createElement('div');
+  crackContainer.className = 'reveal-cracks';
+  for (let i = 0; i < 16; i++) {
+    const crack = document.createElement('div');
+    crack.className = 'crack-line';
+    crack.style.background = `linear-gradient(to bottom, ${r.color}, #ff0080, transparent)`;
+    crack.style.boxShadow = `0 0 12px ${r.color}`;
+    crack.style.transform = `rotate(${(i / 16) * 360 + Math.random()*10}deg)`;
+    crack.style.animationDelay = (0.3 + Math.random() * 0.5) + 's';
+    crackContainer.appendChild(crack);
+  }
+  ov.appendChild(crackContainer);
+
+  // Multiple flashes
+  for (let i = 0; i < 5; i++) {
+    const fl = document.createElement('div');
+    fl.className = 'reveal-flash';
+    fl.style.setProperty('--fl-op', (1 - i * 0.15).toString());
+    fl.style.setProperty('--fl-dur', '0.2s');
+    fl.style.animationDelay = (i * 0.12) + 's';
+    ov.appendChild(fl);
+  }
+
+  ov.appendChild(makeRevealText(r, fontClass, '1.0s', '4.5s'));
+}
+
+function triggerEternalAnim(ov, r, fontClass) {
+  ov.appendChild(makeBackdrop('6.0s'));
+
+  // Scanline time-freeze effect
+  const freeze = document.createElement('div');
+  freeze.className = 'reveal-timefreeze';
+  freeze.style.animationDuration = '0.08s';
+  ov.appendChild(freeze);
+  setTimeout(() => freeze.remove(), 1200);
+
+  // Chromatic aberration layers
+  const chroma = document.createElement('div');
+  chroma.className = 'reveal-chroma';
+  const offsets = [
+    {x:'6px',y:'0px',color:'rgba(255,0,0,0.5)',delay:'0.1s'},
+    {x:'-6px',y:'0px',color:'rgba(0,255,255,0.5)',delay:'0.15s'},
+    {x:'0px',y:'4px',color:'rgba(255,58,0,0.3)',delay:'0.2s'},
+  ];
+  offsets.forEach(o => {
+    const cl = document.createElement('div');
+    cl.className = 'chroma-layer';
+    cl.style.background = o.color;
+    cl.style.setProperty('--ch-x', o.x);
+    cl.style.setProperty('--ch-y', o.y);
+    cl.style.setProperty('--ch-delay', o.delay);
+    cl.style.setProperty('--ch-dur', '2.5s');
+    chroma.appendChild(cl);
+  });
+  ov.appendChild(chroma);
+
+  // Spiral arms radiating outward
+  const armCount = 24;
+  for (let i = 0; i < armCount; i++) {
+    const arm = document.createElement('div');
+    arm.className = 'reveal-spiral-arm';
+    const angle = (i / armCount) * 360;
+    const len = 120 + Math.random() * 180;
+    arm.style.cssText = `
+      transform: rotate(${angle}deg);
+      background: linear-gradient(to right, ${r.color}, transparent);
+      box-shadow: 0 0 8px ${r.color};
+      margin-top: -1px;
+      --sp-len: ${len}px;
+      --sp-dur: ${0.6 + Math.random() * 0.8}s;
+      --sp-delay: ${0.05 + (i / armCount) * 0.6}s;
+    `;
+    ov.appendChild(arm);
+  }
+
+  // Expanding blood-red shockwaves staggered
+  for (let i = 0; i < 5; i++) {
+    const sw = document.createElement('div');
+    sw.className = 'legendary-shockwave';
+    sw.style.borderColor = r.color;
+    sw.style.boxShadow = `0 0 30px ${r.color}, inset 0 0 20px ${r.color}33`;
+    sw.style.animationDelay = (i * 0.3) + 's';
+    sw.style.animationDuration = '1.4s';
+    ov.appendChild(sw);
+  }
+
+  // Glitch bars in the ETERNAL color
+  const glitch = document.createElement('div');
+  glitch.className = 'reveal-glitch';
+  glitch.style.color = r.color;
+  for (let i = 0; i < 30; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'glitch-bar';
+    bar.style.top = (Math.random() * 100) + '%';
+    bar.style.background = `linear-gradient(to right, ${r.color}, #ff0000, ${r.color})`;
+    bar.style.height = (1 + Math.random() * 8) + 'px';
+    bar.style.animationDelay = (Math.random() * 2.0) + 's';
+    bar.style.animationDuration = (1.0 + Math.random() * 1.5) + 's';
+    glitch.appendChild(bar);
+  }
+  ov.appendChild(glitch);
+
+  // Flash
+  const fl = document.createElement('div');
+  fl.className = 'reveal-flash';
+  fl.style.background = r.color;
+  fl.style.setProperty('--fl-op', '0.8');
+  fl.style.setProperty('--fl-dur', '0.3s');
+  ov.appendChild(fl);
+
+  ov.appendChild(makeRevealText(r, fontClass, '1.2s', '6.0s'));
+}
+
+function triggerAbsoluteAnim(ov, r, fontClass) {
+  // Phase 1: implosion pulls everything to center
+  const pull = document.createElement('div');
+  pull.className = 'reveal-implosion';
+  pull.style.setProperty('--ip-delay', '0s');
+  pull.style.setProperty('--ip-dur', '1.0s');
+  ov.appendChild(pull);
+
+  // Phase 2: total white-out
+  const whiteout = document.createElement('div');
+  whiteout.className = 'reveal-absolute-white';
+  whiteout.style.setProperty('--aw-delay', '0.8s');
+  whiteout.style.setProperty('--aw-dur', '2.5s');
+  ov.appendChild(whiteout);
+
+  // Phase 3: god rays burst from center after white-out peak
+  const rayCount = 32;
+  for (let i = 0; i < rayCount; i++) {
+    const ray = document.createElement('div');
+    ray.className = 'reveal-godray';
+    const angle = (i / rayCount) * 360;
+    const opacity = 0.3 + Math.random() * 0.5;
+    const width = 1 + Math.random() * 4;
+    ray.style.cssText = `
+      transform: translate(-50%, -100%) rotate(${angle}deg);
+      background: linear-gradient(to top, white, rgba(232,224,255,0.6), transparent);
+      box-shadow: 0 0 ${width * 4}px white;
+      width: ${width}px;
+      opacity: ${opacity};
+      --gr-delay: ${1.8 + Math.random() * 0.4}s;
+      --gr-dur: ${3.0 + Math.random() * 1.0}s;
+    `;
+    ov.appendChild(ray);
+  }
+
+  // Expanding pure rings
+  for (let i = 0; i < 6; i++) {
+    const ring = document.createElement('div');
+    ring.className = 'reveal-absolute-ring';
+    ring.style.setProperty('--ar-delay', (1.6 + i * 0.35) + 's');
+    ring.style.setProperty('--ar-dur', (2.0 + i * 0.2) + 's');
+    ov.appendChild(ring);
+  }
+
+  // Dark backdrop comes in after white fades
+  const bd = makeBackdrop('8.0s');
+  bd.style.animationDelay = '3.0s';
+  ov.appendChild(bd);
+
+  // Subtle static noise
+  const stat = document.createElement('div');
+  stat.className = 'reveal-static';
+  stat.style.backgroundImage = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
+  stat.style.backgroundSize = '200px 200px';
+  stat.style.setProperty('--st-delay', '0.5s');
+  stat.style.animationDuration = '0.06s';
+  stat.style.animationIterationCount = '30';
+  stat.style.opacity = '0.08';
+  ov.appendChild(stat);
+
+  // Crack lines in white/violet
+  const crackContainer = document.createElement('div');
+  crackContainer.className = 'reveal-cracks';
+  crackContainer.style.color = '#ffffff';
+  for (let i = 0; i < 20; i++) {
+    const crack = document.createElement('div');
+    crack.className = 'crack-line';
+    crack.style.background = `linear-gradient(to bottom, white, ${r.color}, transparent)`;
+    crack.style.boxShadow = `0 0 16px white, 0 0 40px ${r.color}`;
+    crack.style.width = (1 + Math.random() * 3) + 'px';
+    crack.style.transform = `rotate(${(i / 20) * 360 + Math.random() * 8}deg)`;
+    crack.style.animationDelay = (0.7 + Math.random() * 0.4) + 's';
+    crack.style.animationDuration = (0.6 + Math.random() * 0.5) + 's';
+    crackContainer.appendChild(crack);
+  }
+  ov.appendChild(crackContainer);
+
+  // Multiple blinding flashes
+  for (let i = 0; i < 4; i++) {
+    const fl = document.createElement('div');
+    fl.className = 'reveal-flash';
+    fl.style.setProperty('--fl-op', (1.0 - i * 0.15).toString());
+    fl.style.setProperty('--fl-dur', '0.4s');
+    fl.style.animationDelay = (0.7 + i * 0.18) + 's';
+    ov.appendChild(fl);
+  }
+
+  ov.appendChild(makeRevealText(r, fontClass, '3.5s', '7.0s'));
+}
+
+
+async function animateRoll(r) {
+  const nameEl = document.getElementById('roll-aura-name');
+  nameEl.classList.add('animate');
+  nameEl.style.color = '#888';
+
+  const tierIdx = TIER_ORDER.indexOf(r.tier);
+
+  // Longer, more dramatic flicker for rarer tiers
+  const duration = tierIdx >= 9 ? 1200 : tierIdx >= 7 ? 900 : tierIdx >= 5 ? 750 : 600;
+  const steps = tierIdx >= 9 ? 22 : tierIdx >= 5 ? 18 : 15;
+  const stepTime = duration / steps;
+
+  for (let i = 0; i < steps; i++) {
+    const randIdx = Math.floor(Math.random() * AURAS.length);
+    const randAura = AURAS[randIdx];
+    nameEl.textContent = randAura[1];
+    await new Promise(res => setTimeout(res, stepTime));
+  }
+
+  nameEl.classList.remove('animate');
+  showRollResult(r);
+
+  // Trigger opening animation for LEGENDARY and above
+  if (tierIdx >= 4) {
+    triggerOpeningAnim(r);
+  }
+
+  if (TIER_ORDER.indexOf(r.tier) >= 5) {
+    flashScreen();
+  }
+}
+
+function flashScreen() {
+  const f = document.getElementById('flash');
+  f.style.opacity = 0.6;
+  setTimeout(() => f.style.opacity = 0, 50);
+}
+
+// ── ANIMATED AURA CANVAS ──────────────────────────────────────────────────────
+let auraAnimFrame = null;
+
+function stopAuraAnim() {
+  if (auraAnimFrame) { cancelAnimationFrame(auraAnimFrame); auraAnimFrame = null; }
+  const canvas = document.getElementById('aura-canvas');
+  if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
+  const stage = document.getElementById('aura-stage');
+  if (stage) stage.style.boxShadow = '';
+}
+
+function startAuraAnim(color, tier) {
+  stopAuraAnim();
+  const canvas = document.getElementById('aura-canvas');
+  const stage = document.getElementById('aura-stage');
+  if (!canvas || !stage) return;
+  const ctx = canvas.getContext('2d');
+  const rgb = hexToRgb(color);
+  const tierIdx = TIER_ORDER.indexOf(tier);
+  const isBeyond = tierIdx >= 9;
+  const isHigh = tierIdx >= 7;
+
+  const orbitCount = isBeyond ? 4 : isHigh ? 3 : 2;
+  const particlesPerOrbit = isBeyond ? 28 : isHigh ? 20 : 12;
+  const sparkCount = isBeyond ? 80 : isHigh ? 50 : 25;
+  const glowRadius = isBeyond ? 110 : isHigh ? 85 : 60;
+  const speed = isBeyond ? 0.8 : isHigh ? 0.6 : 0.4;
+
+  const particles = [];
+  for (let o = 0; o < orbitCount; o++) {
+    const orbitRadius = 44 + o * 20;
+    const orbitSpeed = speed * (1 - o*0.12) * (o%2===0?1:-1);
+    for (let p = 0; p < particlesPerOrbit; p++) {
+      particles.push({
+        type:'orbit', angle:(p/particlesPerOrbit)*Math.PI*2,
+        orbitRadius, orbitSpeed,
+        size: isBeyond ? 2.4 - o*0.3 : 1.8 - o*0.2,
+        alpha: 0.7 + Math.random()*0.3, trailLen: isBeyond ? 8 : 5, trail:[],
+      });
+    }
+  }
+  for (let i=0;i<sparkCount;i++) {
+    particles.push({
+      type:'spark', x:(Math.random()-0.5)*170, y:(Math.random()-0.5)*90,
+      vx:(Math.random()-0.5)*0.4, vy:-(0.2+Math.random()*0.55),
+      size:0.8+Math.random()*1.4, alpha:0.3+Math.random()*0.45,
+      life:Math.random(), maxLife:0.8+Math.random()*0.5,
+    });
+  }
+
+  let t = 0;
+  function loop() {
+    const W = stage.offsetWidth, H = stage.offsetHeight;
+    canvas.width = W; canvas.height = H;
+    const cx = W/2, cy = H/2;
+    ctx.clearRect(0,0,W,H);
+    t += 0.016;
+
+    // Glow rings
+    for (let ri=0;ri<(isBeyond?4:isHigh?3:2);ri++) {
+      const pulse = Math.sin(t*1.8+ri*1.1)*0.15+0.85;
+      const rr = glowRadius * pulse * (0.55+ri*0.22);
+      const grad = ctx.createRadialGradient(cx,cy,rr*0.3,cx,cy,rr);
+      grad.addColorStop(0,`rgba(${rgb.r},${rgb.g},${rgb.b},${isBeyond?0.12:0.07})`);
+      grad.addColorStop(1,`rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+      ctx.beginPath(); ctx.arc(cx,cy,Math.max(0,rr),0,Math.PI*2);
+      ctx.fillStyle = grad; ctx.fill();
+    }
+
+    // Light beams for top tiers
+    if (isBeyond) {
+      const beamCount = 8;
+      for (let b=0;b<beamCount;b++) {
+        const bAngle = t*0.4+(b/beamCount)*Math.PI*2;
+        const bLen = 65+Math.sin(t*2+b)*12;
+        ctx.save(); ctx.translate(cx,cy); ctx.rotate(bAngle);
+        const bg = ctx.createLinearGradient(0,0,bLen,0);
+        bg.addColorStop(0,`rgba(${rgb.r},${rgb.g},${rgb.b},0.22)`);
+        bg.addColorStop(1,`rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+        ctx.beginPath(); ctx.moveTo(0,-2); ctx.lineTo(bLen,0); ctx.lineTo(0,2);
+        ctx.fillStyle = bg; ctx.fill(); ctx.restore();
+      }
+    }
+
+    particles.forEach(p => {
+      if (p.type==='orbit') {
+        p.angle += p.orbitSpeed * 0.035;
+        const px = cx + Math.cos(p.angle)*p.orbitRadius;
+        const py = cy + Math.sin(p.angle)*p.orbitRadius*0.45;
+        p.trail.push({x:px,y:py});
+        if (p.trail.length > p.trailLen) p.trail.shift();
+        p.trail.forEach((tp,ti) => {
+          ctx.beginPath(); ctx.arc(tp.x,tp.y,Math.max(0,p.size*(ti/p.trail.length)*0.75),0,Math.PI*2);
+          ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${(ti/p.trail.length)*p.alpha*0.45})`;
+          ctx.fill();
+        });
+        ctx.beginPath(); ctx.arc(px,py,Math.max(0,p.size),0,Math.PI*2);
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${p.alpha})`; ctx.fill();
+        const dg = ctx.createRadialGradient(px,py,0,px,py,p.size*3);
+        dg.addColorStop(0,`rgba(${rgb.r},${rgb.g},${rgb.b},0.35)`);
+        dg.addColorStop(1,`rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+        ctx.beginPath(); ctx.arc(px,py,Math.max(0,p.size*3),0,Math.PI*2); ctx.fillStyle=dg; ctx.fill();
+      } else if (p.type==='spark') {
+        p.x+=p.vx; p.y+=p.vy; p.life+=0.008;
+        const fade = Math.sin((p.life/p.maxLife)*Math.PI);
+        if (p.life>=p.maxLife) { p.x=(Math.random()-0.5)*155; p.y=(Math.random()-0.5)*75; p.life=0; p.maxLife=0.8+Math.random()*0.5; p.vx=(Math.random()-0.5)*0.4; p.vy=-(0.2+Math.random()*0.55); }
+        ctx.beginPath(); ctx.arc(cx+p.x,cy+p.y,Math.max(0,p.size*fade),0,Math.PI*2);
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${p.alpha*fade})`; ctx.fill();
+      }
+    });
+    const gs = isBeyond ? 55 : isHigh ? 35 : 20;
+    const ga = isBeyond ? 0.35 : isHigh ? 0.22 : 0.12;
+    stage.style.boxShadow = `0 0 ${gs}px rgba(${rgb.r},${rgb.g},${rgb.b},${ga}), inset 0 0 ${gs*0.6}px rgba(${rgb.r},${rgb.g},${rgb.b},0.05)`;
+    auraAnimFrame = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ── AURA CANVAS (static fallback) ─────────────────────────────────────────────
+function drawAura(tier, color) {
+  const canvas = document.getElementById('aura-canvas');
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const tierIndex = TIER_ORDER.indexOf(tier);
+
+  if (tierIndex < 2) return;
+
+  const particleCount = Math.min(20 + tierIndex * 3, 60);
+  const maxRadius = Math.min(canvas.width, canvas.height) * 0.4;
+
+  for (let i = 0; i < particleCount; i++) {
+    const angle = (Math.PI * 2 * i) / particleCount;
+    const radius = maxRadius * (0.6 + Math.random() * 0.4);
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius;
+    const size = 1 + Math.random() * (tierIndex / 2);
+
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = gradient;
+    ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+    ctx.beginPath();
+    ctx.arc(x, y,Math.max(0,size * 3), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const coreGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxRadius * 0.3);
+  coreGradient.addColorStop(0, color);
+  coreGradient.addColorStop(1, 'transparent');
+  ctx.fillStyle = coreGradient;
+  ctx.globalAlpha = 0.2;
+  ctx.beginPath();
+  ctx.arc(cx, cy,Math.max(0,maxRadius * 0.3), 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ── POTIONS ───────────────────────────────────────────────────────────────────
+function usePotion(id) {
+  const cnt = S.invPotions[id] || 0;
+  if (cnt < 1) { toast('No potions left!'); return; }
+  const p = POTION_MAP[id];
+  S.invPotions[id]--;
+  S.potActive = id;
+  S.potEndTime = Date.now() + p.secs * 1000;
+  logPush(`Used ${p.label} (${p.mult}× luck for ${p.secs}s)`, true);
+  toast(`✓ ${p.label} active!`);
+  renderAll();
+  setTimeout(() => {
+    if (S.potActive === id) {
+      S.potActive = null;
+      toast('Potion expired');
+      renderAll();
+    }
+  }, p.secs * 1000);
+}
+
+// ── BUFF & BIOME TIMERS ───────────────────────────────────────────────────────
+function updateBuffBar() {
+  const wrap = document.getElementById('buff-bar-wrap');
+  const disp = document.getElementById('buff-display');
+  if (!wrap || !disp) return;
+  if (S.potActive && Date.now() < S.potEndTime) {
+    const p = POTION_MAP[S.potActive];
+    const rem = (S.potEndTime - Date.now()) / 1000;
+    const total = p.secs;
+    const pct = rem / total * 100;
+    document.getElementById('buff-name').textContent = `${p.label} ×${p.mult}`;
+    document.getElementById('buff-time').textContent = Math.ceil(rem) + 's';
+    document.getElementById('buff-fill').style.width = pct + '%';
+    wrap.style.display = 'block';
+    disp.style.display = 'none';
+  } else {
+    wrap.style.display = 'none';
+    disp.style.display = 'block';
+    disp.textContent = 'No potion active';
+  }
+}
+
+function updateBiomeBar() {
+  if (S.biome && Date.now()/1000 >= S.biome.expires) {
+    S.biome = null;
+    stopBiomeVisual();
+    logPush('Biome faded away...');
+    renderAll();
+  }
+  const wrap = document.getElementById('biome-bar-wrap');
+  const disp = document.getElementById('biome-display');
+  if (!wrap || !disp) return;
+  if (S.biome && Date.now()/1000 < S.biome.expires) {
+    const b = BIOME_MAP[S.biome.id];
+    const rem = S.biome.expires - Date.now()/1000;
+    const pct = rem / b.duration * 100;
+    document.getElementById('biome-name').textContent = `${b.icon} ${b.name}`;
+    document.getElementById('biome-time').textContent = Math.ceil(rem) + 's';
+    document.getElementById('biome-fill').style.width = pct + '%';
+    document.getElementById('biome-boosted').textContent = 'Boosted: ' + b.boosted.slice(0,4).join(', ') + (b.boosted.length > 4 ? '...' : '');
+    wrap.style.display = 'block';
+    disp.style.display = 'none';
+  } else {
+    wrap.style.display = 'none';
+    disp.style.display = 'block';
+    disp.textContent = 'No biome active';
+  }
+}
+
+setInterval(() => {
+  updateBuffBar();
+  updateBiomeBar();
+  renderStats();
+}, 500);
+
+// Biome spawn timer — small chance every 60s
+setInterval(() => {
+  if (S.biome && Date.now()/1000 < S.biome.expires) return;
+  const totalChance = BIOMES.reduce((s,b) => s + b.spawnChance, 0);
+  if (Math.random() < totalChance / BIOMES.length) {
+    let r = Math.random() * BIOMES.reduce((s,b)=>s+b.spawnChance,0);
+    for (const b of BIOMES) {
+      r -= b.spawnChance;
+      if (r <= 0) { spawnBiome(b.id); break; }
+    }
+  }
+}, 60000);
+
+// ── BIOME SYSTEM ──────────────────────────────────────────────────────────────
+let biomeParticles = [];
+let biomeAnimFrame = null;
+
+function spawnBiome(id) {
+  const b = BIOME_MAP[id];
+  if (!b) return;
+  S.biome = { id, expires: Date.now()/1000 + b.duration };
+  logPush(`${b.icon} ${b.name} biome arrived! ${b.boosted.slice(0,3).join(', ')} boosted!`, true);
+  toast(`${b.icon} ${b.name} — ${b.desc}`);
+  startBiomeVisual(b);
+  renderAll();
+}
+
+function stopBiomeVisual() {
+  if (biomeAnimFrame) { cancelAnimationFrame(biomeAnimFrame); biomeAnimFrame = null; }
+  biomeParticles = [];
+  document.documentElement.style.filter = '';
+  const ov = document.getElementById('biome-overlay');
+  if (ov) { ov.style.opacity = '0'; ov.style.background = 'transparent'; }
+  document.body.classList.remove('biome-active');
+}
+
+function startBiomeVisual(b) {
+  stopBiomeVisual();
+  document.documentElement.style.filter = `hue-rotate(${b.hueShift * 0.18}deg) saturate(1.15)`;
+  let ov = document.getElementById('biome-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'biome-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2;transition:opacity 2s,background 2s;';
+    document.body.appendChild(ov);
+  }
+  ov.style.background = b.overlayColor;
+  ov.style.opacity = '1';
+  document.body.classList.add('biome-active');
+
+  let pc = document.getElementById('biome-particles');
+  if (!pc) {
+    pc = document.createElement('canvas');
+    pc.id = 'biome-particles';
+    pc.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:3;width:100%;height:100%;';
+    document.body.appendChild(pc);
+  }
+  pc.width = window.innerWidth; pc.height = window.innerHeight;
+  const W = pc.width, H = pc.height;
+  const col = b.particleColor;
+  const rgb = hexToRgb(col);
+
+  if (b.particleType === 'rain') {
+    for (let i=0;i<120;i++) biomeParticles.push({x:Math.random()*W,y:Math.random()*H,vy:8+Math.random()*6,vx:-1-Math.random(),len:12+Math.random()*18,a:0.15+Math.random()*0.4});
+  } else if (b.particleType === 'wind') {
+    for (let i=0;i<80;i++) biomeParticles.push({x:Math.random()*W,y:Math.random()*H,vx:4+Math.random()*5,vy:(Math.random()-0.5)*1.5,len:20+Math.random()*40,a:0.1+Math.random()*0.3,wave:Math.random()*Math.PI*2});
+  } else if (b.particleType === 'ember') {
+    for (let i=0;i<90;i++) biomeParticles.push({x:Math.random()*W,y:H+10,vx:(Math.random()-0.5)*2,vy:-(1.5+Math.random()*3),size:2+Math.random()*3,a:0.5+Math.random()*0.5,life:Math.random(),maxLife:1+Math.random()*2});
+  } else if (b.particleType === 'void') {
+    for (let i=0;i<60;i++) biomeParticles.push({x:Math.random()*W,y:Math.random()*H,r:30+Math.random()*80,a:0.03+Math.random()*0.06,speed:0.002+Math.random()*0.004,angle:Math.random()*Math.PI*2,pulsed:Math.random()*Math.PI*2});
+  } else if (b.particleType === 'snow') {
+    for (let i=0;i<150;i++) biomeParticles.push({x:Math.random()*W,y:Math.random()*H,vy:0.5+Math.random()*1.5,vx:(Math.random()-0.5)*0.5,size:2+Math.random()*4,a:0.3+Math.random()*0.5,wave:Math.random()*Math.PI*2,waveAmp:Math.random()*1.5,t:Math.random()*100});
+  } else if (b.particleType === 'aurora') {
+    for (let i=0;i<8;i++) biomeParticles.push({band:i,offset:Math.random()*Math.PI*2,speed:0.003+Math.random()*0.005,a:0.06+Math.random()*0.1,width:80+Math.random()*180,hueOff:i*40});
+  }
+
+  let t = 0;
+  function loop() {
+    if (!S.biome || Date.now()/1000 >= S.biome.expires) { stopBiomeVisual(); return; }
+    pc.width = window.innerWidth; pc.height = window.innerHeight;
+    const W2 = pc.width, H2 = pc.height;
+    const ctx = pc.getContext('2d');
+    ctx.clearRect(0,0,W2,H2);
+    t += 0.016;
+    biomeParticles.forEach(p => {
+      if (b.particleType === 'rain') {
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${p.a})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+p.vx*p.len/p.vy, p.y+p.len); ctx.stroke();
+        p.x += p.vx; p.y += p.vy;
+        if (p.y > H2+20) { p.y = -20; p.x = Math.random()*W2; }
+      } else if (b.particleType === 'wind') {
+        p.wave += 0.04;
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${p.a})`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y+Math.sin(p.wave)*4);
+        ctx.bezierCurveTo(p.x+p.len/3, p.y+Math.sin(p.wave+1)*5, p.x+p.len*0.7, p.y+Math.sin(p.wave+2)*3, p.x+p.len, p.y+p.vy);
+        ctx.stroke();
+        p.x += p.vx; p.y += Math.sin(p.wave)*0.5;
+        if (p.x > W2+50) { p.x = -50; p.y = Math.random()*H2; }
+      } else if (b.particleType === 'ember') {
+        p.life += 0.012; p.x += p.vx; p.y += p.vy;
+        const fade = Math.sin((p.life/p.maxLife)*Math.PI);
+        if (p.life >= p.maxLife) { p.life=0; p.x=Math.random()*W2; p.y=H2+10; p.vx=(Math.random()-0.5)*2; p.vy=-(1.5+Math.random()*3); }
+        ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(0,p.size*fade),0,Math.PI*2);
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${p.a*fade})`; ctx.fill();
+      } else if (b.particleType === 'void') {
+        p.angle += p.speed; p.pulsed += 0.02;
+        const pulse = 0.85+Math.sin(p.pulsed)*0.15;
+        const grad = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*pulse);
+        grad.addColorStop(0,`rgba(${rgb.r},${rgb.g},${rgb.b},${p.a*2})`);
+        grad.addColorStop(1,`rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+        ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(0,p.r*pulse),0,Math.PI*2); ctx.fillStyle = grad; ctx.fill();
+      } else if (b.particleType === 'snow') {
+        p.t += 0.02; p.y += p.vy;
+        const wx = p.x+Math.sin(p.t)*p.waveAmp;
+        if (p.y > H2+10) { p.y=-10; p.x=Math.random()*W2; }
+        ctx.beginPath(); ctx.arc(wx,p.y,Math.max(0,p.size),0,Math.PI*2);
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${p.a})`; ctx.fill();
+      } else if (b.particleType === 'aurora') {
+        p.offset += p.speed;
+        const y = H2*0.2+Math.sin(p.offset+p.band)*H2*0.12;
+        const hue = (b.hueShift+p.hueOff+t*10)%360;
+        const grad = ctx.createLinearGradient(0,y-p.width/2,0,y+p.width/2);
+        grad.addColorStop(0,`hsla(${hue},100%,70%,0)`);
+        grad.addColorStop(0.5,`hsla(${hue},100%,70%,${p.a})`);
+        grad.addColorStop(1,`hsla(${hue},100%,70%,0)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,y-p.width/2,W2,p.width);
+      }
+    });
+    biomeAnimFrame = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+
+// ── AUTO ROLL ─────────────────────────────────────────────────────────────────
+function setAutoSpeed(ms) {
+  S.autoSpeed = ms;
+  if (ms > 0) {
+    startAutoRoll();
+  } else {
+    stopAutoRoll();
+  }
+  renderAll();
+}
+
+function startAutoRoll() {
+  stopAutoRoll();
+  if (S.autoSpeed > 0) {
+    autoInterval = setInterval(() => doRoll(), S.autoSpeed);
+  }
+}
+
+function stopAutoRoll() {
+  if (autoInterval) {
+    clearInterval(autoInterval);
+    autoInterval = null;
+  }
+}
+
+function updateAutoStatus() {
+  const el = document.getElementById('auto-status');
+  if (!el) return;
+  if (S.autoSpeed > 0) {
+    el.textContent = `Auto rolling every ${S.autoSpeed/1000}s`;
+    el.style.color = 'var(--gold)';
+  } else {
+    el.textContent = 'Auto roll is OFF';
+    el.style.color = 'var(--text-dim)';
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderLog();
+  renderInvAuras();
+  renderInvPotions();
+  renderCollection();
+  renderGloves();
+  renderBank();
+  renderAuto();
+}
+
+function renderStats() {
+  document.getElementById('stat-rolls').textContent = fmtNum(S.rolls);
+  document.getElementById('stat-luck').textContent = totalLuck().toFixed(2) + '×';
+  document.getElementById('stat-coins').textContent = fmtNum(S.coins);
+  document.getElementById('stat-auras').textContent = Object.keys(S.invAuras).length;
+  // rarest
+  let best = null, bi = -1;
+  for (const name of Object.keys(S.invAuras)) {
+    const a = AURA_MAP[name];
+    if (!a) continue;
+    const i = TIER_ORDER.indexOf(a[0]);
+    if (i > bi) { bi = i; best = a; }
+  }
+  const rarEl = document.getElementById('stat-rarest');
+  if (best) { rarEl.textContent = best[1]; rarEl.style.color = best[3]; }
+  else { rarEl.textContent = '—'; rarEl.style.color = ''; }
+  // biome
+  const biomeEl = document.getElementById('stat-biome');
+  if (S.biome && Date.now()/1000 < S.biome.expires) {
+    const b = BIOME_MAP[S.biome.id];
+    biomeEl.textContent = b.icon + ' ' + b.name;
+  } else {
+    biomeEl.textContent = 'none';
+  }
+  // quick-use pot buttons
+  ['p1','p3','p5'].forEach(id => {
+    const btn = document.getElementById('pot-quick-'+id);
+    if (!btn) return;
+    const cnt = S.invPotions[id]||0;
+    btn.disabled = cnt === 0 || (S.potActive && Date.now() < S.potEndTime);
+    const p = POTION_MAP[id];
+    if (p) btn.title = `${p.label} ×${cnt}`;
+  });
+}
+
+function renderLog() {
+  const el = document.getElementById('log');
+  el.innerHTML = S.log.map(x => `<div class="log-line${x.special?' special':''}">${x.msg}</div>`).join('');
+}
+
+function renderInvAuras() {
+  const el = document.getElementById('inv-auras');
+  const items = Object.entries(S.invAuras).sort((a,b) => {
+    const ta = AURA_MAP[a[0]];
+    const tb = AURA_MAP[b[0]];
+    if (!ta || !tb) return 0;
+    return TIER_ORDER.indexOf(tb[0]) - TIER_ORDER.indexOf(ta[0]);
+  });
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty-msg">No auras collected yet</div>';
+    return;
+  }
+  el.innerHTML = '<div class="inv-list">' + items.map(([name, cnt]) => {
+    const a = AURA_MAP[name];
+    if (!a) return '';
+    const [tier, , , color] = a;
+    return `<div class="inv-item">
+      <span class="inv-item-name" style="color:${color}">${name}</span>
+      <span class="inv-item-count">×${cnt}</span>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function renderInvPotions() {
+  const el = document.getElementById('inv-potions');
+  const owned = Object.entries(S.invPotions).filter(([,c]) => c > 0);
+  if (owned.length === 0) {
+    el.innerHTML = '<div class="empty-msg">No potions in inventory</div>';
+    return;
+  }
+  el.innerHTML = owned.map(([id, cnt]) => {
+    const p = POTION_MAP[id];
+    return `<div class="potion-item">
+      <span class="potion-icon">${p.icon}</span>
+      <div class="potion-info">
+        <div class="potion-name">${p.label}</div>
+        <div class="potion-desc">${p.mult}× luck · ${p.secs}s</div>
+      </div>
+      <span class="potion-count">×${cnt}</span>
+      <button class="potion-use" onclick="usePotion('${id}')" ${cnt<1?'disabled':''}>Use</button>
+    </div>`;
+  }).join('');
+}
+
+function renderGloves() {
+  const el = document.getElementById('gloves-grid');
+  el.innerHTML = GLOVES.map(g => {
+    const crafted = S.crafted.includes(g.id);
+    const equipped = S.glove === g.id;
+    const craftable = canCraft(g);
+    return `<div class="glove-card ${crafted?'crafted':''}">
+      <div class="glove-card-name">${g.name}</div>
+      <div class="glove-card-desc">${g.luckMult}× luck multiplier</div>
+      <div class="glove-recipe">
+        <div class="glove-recipe-title">Recipe</div>
+        ${Object.entries(g.recipe).map(([mat, qty]) => {
+          const have = S.invAuras[mat] || 0;
+          return `<div class="glove-recipe-item ${have >= qty ? 'have' : 'need'}">
+            <span>${mat}</span>
+            <span>${have}/${qty}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="glove-actions">
+        ${!crafted ? `<button onclick="craftGlove('${g.id}')" ${!craftable?'disabled':''}>Craft</button>` : ''}
+        ${crafted && !equipped ? `<button onclick="equipGlove('${g.id}')">Equip</button>` : ''}
+        ${equipped ? `<button class="equipped">Equipped</button>` : ''}
+        ${crafted && equipped ? `<button onclick="unequipGlove()">Unequip</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderBank() {
+  const tcEl = document.getElementById('tier-coins');
+  tcEl.innerHTML = '';
+  TIER_ORDER.slice().reverse().forEach(tier => {
+    const c = TIER_COINS[tier];
+    const row = document.createElement('div');
+    row.className = 'tier-coin-row';
+    row.innerHTML = `<span class="tier-name" style="color:${TIER_COLORS[tier]}">${tier}</span><span class="coin-val">${c}c</span>`;
+    tcEl.appendChild(row);
+  });
+  const shopEl = document.getElementById('shop-grid');
+  shopEl.innerHTML = '';
+  SHOP_POTIONS.forEach((sp,i) => {
+    const p = POTION_MAP[sp.id];
+    const canBuy = S.coins >= sp.coinCost;
+    const owned = S.invPotions[sp.id]||0;
+    const div = document.createElement('div');
+    div.className = 'shop-item';
+    div.innerHTML = `
+      <span style="font-size:1.2rem">${p.icon}</span>
+      <div class="shop-item-info">
+        <div class="shop-item-name">${sp.label}</div>
+        <div class="shop-item-stats">${p.mult}× luck · ${p.secs}s · have: ${owned}</div>
+      </div>
+      <button class="shop-item-cost" onclick="buyPotion('${sp.id}',${sp.coinCost})" ${canBuy?'':'disabled'}>
+        ${fmtNum(sp.coinCost)}c
+      </button>
+    `;
+    shopEl.appendChild(div);
+  });
+}
+
+const AUTO_SPEEDS = [
+  {ms:0,    label:'Off'},
+  {ms:1000, label:'Normal (1s)'},
+  {ms:2000, label:'Slow (2s)'},
+  {ms:4000, label:'Very Slow (4s)'},
+];
+function renderAuto() {
+  const el = document.getElementById('auto-options');
+  if (!el) return;
+  el.innerHTML = '';
+  AUTO_SPEEDS.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'auto-opt' + (S.autoSpeed===opt.ms ? ' selected' : '');
+    btn.textContent = opt.label;
+    btn.onclick = () => setAutoSpeed(opt.ms);
+    el.appendChild(btn);
+  });
+  updateAutoStatus();
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+function canCraft(g) {
+  return Object.entries(g.recipe).every(([m,q]) => (S.invAuras[m]||0) >= q);
+}
+function craftGlove(id) {
+  const g = GLOVES.find(x=>x.id===id);
+  if (!g || !canCraft(g) || S.crafted.includes(id)) return;
+  for (const [m,q] of Object.entries(g.recipe)) {
+    S.invAuras[m] -= q;
+    if (!S.invAuras[m]) delete S.invAuras[m];
+  }
+  S.crafted.push(id);
+  S.glove = id;
+  logPush(`Crafted & equipped ${g.name}!`, true);
+  toast(`✓ ${g.name} crafted!`);
+  renderAll();
+}
+function equipGlove(id) {
+  S.glove = id;
+  const g = GLOVES.find(x=>x.id===id);
+  logPush(`Equipped ${g.name}`, true);
+  renderAll();
+}
+function unequipGlove() {
+  S.glove = null;
+  logPush('Glove unequipped');
+  renderAll();
+}
+function buyPotion(id, cost) {
+  if (S.coins < cost) { toast('Not enough coins!'); return; }
+  S.coins -= cost;
+  S.invPotions[id] = (S.invPotions[id]||0) + 1;
+  const p = POTION_MAP[id];
+  logPush(`Bought ${p.label}! (-${fmtNum(cost)}c)`, true);
+  toast(`✓ ${p.label} added to bag`);
+  renderAll();
+}
+function toggleQuick() {
+  S.quickRoll = !S.quickRoll;
+  const btn = document.getElementById('quick-btn');
+  btn.textContent = `⚡ Quick: ${S.quickRoll?'ON':'OFF'}`;
+  btn.classList.toggle('active', S.quickRoll);
+}
+
+// ── COLLECTION ────────────────────────────────────────────────────────────────
+let colFilter = 'ALL';
+function setColFilter(f) {
+  colFilter = f;
+  renderCollection();
+}
+
+function renderCollection() {
+  const found = Object.keys(S.invAuras).length;
+  const total = AURAS.length;
+  document.getElementById('col-found').textContent = found;
+  document.getElementById('col-total').textContent = total;
+  document.getElementById('col-bar').style.width = (found/total*100) + '%';
+
+  const filterEl = document.getElementById('col-filters');
+  filterEl.innerHTML = '';
+  const filterOpts = ['ALL', ...TIER_ORDER.slice().reverse(), 'UNDISCOVERED'];
+  filterOpts.forEach(f => {
+    const btn = document.createElement('button');
+    btn.className = 'col-filter-btn' + (colFilter===f?' active':'');
+    btn.textContent = f;
+    if (TIER_COLORS[f]) btn.style.color = colFilter===f ? TIER_COLORS[f] : '';
+    btn.onclick = () => setColFilter(f);
+    filterEl.appendChild(btn);
+  });
+
+  const content = document.getElementById('col-content');
+  content.innerHTML = '';
+
+  const tiersToShow = colFilter === 'ALL' || colFilter === 'UNDISCOVERED'
+    ? [...TIER_ORDER].reverse()
+    : [colFilter];
+
+  tiersToShow.forEach(tier => {
+    let auras = AURAS.filter(a => a[0] === tier);
+    if (colFilter === 'UNDISCOVERED') {
+      auras = AURAS.filter(a => !S.invAuras[a[1]]);
+    }
+    if (!auras.length) return;
+
+    const group = document.createElement('div');
+    group.className = 'collection-tier-group';
+
+    const tierFound = auras.filter(a => S.invAuras[a[1]]).length;
+    const label = document.createElement('div');
+    label.className = 'collection-tier-label';
+    label.style.color = TIER_COLORS[tier] || 'var(--text-dim)';
+    label.innerHTML = `${tier} <span class="tier-found">${colFilter==='UNDISCOVERED'?'?':tierFound+'/'+auras.length}</span>`;
+    group.appendChild(label);
+
+    const grid = document.createElement('div');
+    grid.className = 'collection-grid';
+
+    auras.forEach(([t, name, chance, color, gc]) => {
+      const cnt = S.invAuras[name] || 0;
+      const disc = cnt > 0;
+      const card = document.createElement('div');
+      card.className = 'col-card ' + (disc ? 'discovered' : 'undiscovered');
+      if (disc) card.style.color = color;
+      const luck = totalLuck();
+      const chanceStr = fmtChance(chance, luck);
+      const gildedDot = (gc > 0 && disc) ? '<span class="col-gilded-dot" title="Gilded possible"></span>' : '';
+      const newBadge = disc && cnt === 1 ? '<span class="col-card-new">NEW</span>' : '';
+      card.innerHTML = `
+        ${newBadge}
+        <div class="col-card-name">${disc ? name : '???'}${gildedDot}</div>
+        <div class="col-card-info">
+          <span>${disc ? chanceStr : '???'}</span>
+          ${disc ? `<span class="col-card-count">×${cnt}</span>` : ''}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    group.appendChild(grid);
+    content.appendChild(group);
+  });
+}
+
+// ── PANELS & TABS ─────────────────────────────────────────────────────────────
+let currentPanel = 'roll';
+function setPanel(p) {
+  document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+  document.getElementById('panel-'+p).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((b,i) => {
+    const labels = ['roll','inv','collect','craft','bank','auto','save','dev'];
+    b.classList.toggle('active', labels[i]===p);
+  });
+  currentPanel = p;
+  renderAll();
+  if (p === 'dev') {
+    stopDevAuraAnim();
+    initDevPanel();
+  } else {
+    if (typeof devCycleTimer !== 'undefined' && devCycleTimer) {
+      clearInterval(devCycleTimer); devCycleTimer = null;
+      const b = document.getElementById('dev-cycle-btn');
+      if (b) { b.textContent = '⟳ Cycle All'; b.style.color = ''; }
+    }
+    stopDevAuraAnim();
+  }
+}
+let invTab = 'auras';
+function setInvTab(tab) {
+  invTab = tab;
+  document.getElementById('inv-auras').style.display = tab==='auras'?'block':'none';
+  document.getElementById('inv-potions').style.display = tab==='potions'?'block':'none';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['auras','potions'][i]===tab));
+  if (tab==='auras') renderInvAuras(); else renderInvPotions();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+// ── SAVE / LOAD ───────────────────────────────────────────────────────────────
+function saveGame() {
+  const data = {
+    rolls:S.rolls, coins:S.coins,
+    invAuras:S.invAuras, invPotions:S.invPotions,
+    crafted:S.crafted, glove:S.glove,
+    autoSpeed:S.autoSpeed, quickRoll:S.quickRoll,
+  };
+  localStorage.setItem('noko_rng_v1', JSON.stringify(data));
+  toast('✓ Game saved!');
+  logPush('Game saved ✓', true);
+  renderAll();
+}
+function loadGame() {
+  try {
+    const raw = localStorage.getItem('noko_rng_v1');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    S.rolls = d.rolls||0; S.coins = d.coins||0;
+    S.invAuras = d.invAuras||{}; S.invPotions = d.invPotions||{};
+    S.crafted = d.crafted||[]; S.glove = d.glove||null;
+    S.autoSpeed = d.autoSpeed||0; S.quickRoll = d.quickRoll||false;
+    S.biome = null;
+    S.log = [{msg:'Game loaded', special:false}];
+    const qb = document.getElementById('quick-btn');
+    if (qb) { qb.textContent=`⚡ Quick: ${S.quickRoll?'ON':'OFF'}`; qb.classList.toggle('active',S.quickRoll); }
+    if (S.autoSpeed) startAutoRoll();
+  } catch(e) {}
+}
+
+// ── STARS ─────────────────────────────────────────────────────────────────────
+function buildStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 150; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() < 0.8 ? 1 : Math.random() < 0.5 ? 2 : 3;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      --d:${2+Math.random()*5}s; --o:${0.3+Math.random()*0.6};
+      animation-delay:${Math.random()*6}s;
+    `;
+    c.appendChild(s);
+  }
+}
+
+// ── KEYBOARD ──────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'r' && currentPanel === 'roll') { e.preventDefault(); doRoll(); }
+  if (k === 'f') toggleQuick();
+  if (k === 's') saveGame();
+});
+
+// ── SECRET: Konami code unlocks dev panel ─────────────────────────────────────
+const KONAMI = ['arrowup','arrowup','arrowdown','arrowdown','arrowleft','arrowright','arrowleft','arrowright','b','a'];
+let konamiIdx = 0;
+document.addEventListener('keydown', e => {
+  if (e.key.toLowerCase() === KONAMI[konamiIdx]) {
+    konamiIdx++;
+    if (konamiIdx === KONAMI.length) {
+      konamiIdx = 0;
+      const devBtn = document.getElementById('nav-dev-btn');
+      if (!devBtn) {
+        const btn = document.createElement('button');
+        btn.id = 'nav-dev-btn';
+        btn.className = 'nav-btn';
+        btn.style.cssText = 'border-color:#f43f5e55;color:#f43f5e';
+        btn.textContent = '🛠 Dev';
+        btn.onclick = () => setPanel('dev');
+        document.querySelector('.nav-bar').appendChild(btn);
+        toast('🛠 Dev mode unlocked');
+      } else {
+        devBtn.remove();
+        toast('🛠 Dev mode hidden');
+      }
+    }
+  } else {
+    konamiIdx = e.key.toLowerCase() === KONAMI[0] ? 1 : 0;
+  }
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+buildStars();
+loadGame();
+renderAll();
+
+// ── DEV MODE ──────────────────────────────────────────────────────────────────
+let devSelected = null;   // { tier, name, color, rawChance }
+let devGilded = false;
+let devTierFilter = 'ALL';
+let devCycleTimer = null;
+let devCycleIdx = 0;
+
+function initDevPanel() {
+  // Build tier filter buttons
+  const filterEl = document.getElementById('dev-tier-filters');
+  if (!filterEl || filterEl.children.length > 0) return;
+
+  ['ALL', ...TIER_ORDER].forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'dev-tier-btn' + (t === 'ALL' ? ' active' : '');
+    btn.textContent = t;
+    if (TIER_COLORS[t]) btn.style.color = devTierFilter === t ? TIER_COLORS[t] : '';
+    btn.onclick = () => {
+      devTierFilter = t;
+      document.querySelectorAll('.dev-tier-btn').forEach((b, i) => {
+        const tiers = ['ALL', ...TIER_ORDER];
+        b.classList.toggle('active', tiers[i] === t);
+        b.style.color = (tiers[i] === t && TIER_COLORS[tiers[i]]) ? TIER_COLORS[tiers[i]] : (TIER_COLORS[tiers[i]] || '');
+      });
+      devFilter();
+    };
+    filterEl.appendChild(btn);
+  });
+
+  devFilter();
+}
+
+function devFilter() {
+  const query = (document.getElementById('dev-search')?.value || '').toLowerCase();
+  const grid = document.getElementById('dev-aura-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const filtered = AURAS.filter(([tier, name]) => {
+    const tierMatch = devTierFilter === 'ALL' || tier === devTierFilter;
+    const nameMatch = !query || name.toLowerCase().includes(query);
+    return tierMatch && nameMatch;
+  });
+
+  filtered.forEach(([tier, name, chance, color]) => {
+    const chip = document.createElement('div');
+    chip.className = 'dev-aura-chip' + (devSelected && devSelected.name === name ? ' selected' : '');
+    chip.style.color = color;
+    chip.style.borderColor = devSelected && devSelected.name === name ? color : '';
+    chip.textContent = name;
+    chip.title = `${tier} · 1 in ${chance.toLocaleString()}`;
+    chip.onclick = () => devSelectAura(tier, name, chance, color);
+    grid.appendChild(chip);
+  });
+}
+
+function devSelectAura(tier, name, chance, color) {
+  devSelected = { tier, name, color, rawChance: chance };
+  devGilded = false;
+  document.getElementById('dev-gilded-btn').classList.remove('gilded-on');
+
+  // Highlight selected chip
+  document.querySelectorAll('.dev-aura-chip').forEach(c => {
+    const match = c.textContent === name;
+    c.classList.toggle('selected', match);
+    c.style.borderColor = match ? color : '';
+  });
+
+  // Update preview name
+  const nameEl = document.getElementById('dev-preview-name');
+  nameEl.textContent = name;
+  nameEl.style.color = color;
+  nameEl.className = 'roll-aura-name';
+  const fontClass = AURA_FONT_CLASS[name] || TIER_FONT_CLASS[tier] || 'font-common';
+  nameEl.classList.add(fontClass);
+  const tierIdx = TIER_ORDER.indexOf(tier);
+  if (tierIdx >= 6) nameEl.classList.add('rare-font');
+  if (tierIdx >= 9) nameEl.classList.add('transcendent-font');
+
+  // Show title
+  const titleEl = document.getElementById('dev-preview-title');
+  if (titleEl) {
+    const auraTitle = AURA_TITLES[name];
+    titleEl.textContent = auraTitle || '';
+    titleEl.style.color = color;
+  }
+
+  // Meta chips
+  document.getElementById('dev-preview-tier').textContent = tier;
+  document.getElementById('dev-preview-tier').style.color = color;
+  document.getElementById('dev-preview-tier').style.borderColor = color + '55';
+  document.getElementById('dev-preview-chance').textContent = `1 in ${chance >= 1e9 ? (chance/1e9).toFixed(2)+'B' : chance >= 1e6 ? (chance/1e6).toFixed(1)+'M' : chance >= 1e3 ? (chance/1e3).toFixed(0)+'K' : chance}`;
+  document.getElementById('dev-preview-font').textContent = fontClass;
+
+  // Canvas aura
+  const canvas = document.getElementById('dev-canvas');
+  // Redirect aura animation to dev canvas by temporarily swapping IDs
+  const realCanvas = document.getElementById('aura-canvas');
+  const realStage = document.querySelector('.aura-stage');
+
+  // Use a dedicated dev animation function
+  stopDevAuraAnim();
+  if (tierIdx >= 4) {
+    startDevAuraAnim(color, tier);
+  } else {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.parentElement.offsetWidth;
+    const H = canvas.parentElement.offsetHeight || 110;
+    canvas.width = W; canvas.height = H;
+    ctx.clearRect(0, 0, W, H);
+    if (tierIdx >= 2) drawDevAuraStatic(ctx, W, H, color, tierIdx);
+  }
+
+  // Enable buttons
+  document.getElementById('dev-anim-btn').disabled = tierIdx < 4;
+  document.getElementById('dev-gilded-btn').disabled = false;
+}
+
+function devPreviewGilded() {
+  if (!devSelected) return;
+  devGilded = !devGilded;
+  const btn = document.getElementById('dev-gilded-btn');
+  btn.classList.toggle('gilded-on', devGilded);
+
+  const nameEl = document.getElementById('dev-preview-name');
+  if (devGilded) {
+    nameEl.style.filter = `drop-shadow(0 0 12px #f0c060) drop-shadow(0 0 24px #f0c060)`;
+  } else {
+    nameEl.style.filter = '';
+  }
+}
+
+function devTriggerAnim() {
+  if (!devSelected) return;
+  const r = { ...devSelected, gilded: devGilded, luck: 1 };
+  triggerOpeningAnim(r);
+}
+
+let devAnimFrame = null;
+function stopDevAuraAnim() {
+  if (devAnimFrame) { cancelAnimationFrame(devAnimFrame); devAnimFrame = null; }
+  const canvas = document.getElementById('dev-canvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function drawDevAuraStatic(ctx, W, H, color, tierIdx) {
+  const cx = W/2, cy = H/2;
+  const particleCount = Math.min(20 + tierIdx * 3, 40);
+  const maxRadius = Math.min(W, H) * 0.38;
+  const rgb = hexToRgb(color);
+  for (let i = 0; i < particleCount; i++) {
+    const angle = (Math.PI * 2 * i) / particleCount;
+    const radius = maxRadius * (0.6 + Math.random() * 0.4);
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius * 0.55;
+    const size = 1 + Math.random() * (tierIdx / 2.5);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+    g.addColorStop(0, color);
+    g.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(x, y,Math.max(0,size * 3), 0, Math.PI * 2);
+    ctx.fillStyle = g; ctx.fill();
+  }
+}
+
+function startDevAuraAnim(color, tier) {
+  stopDevAuraAnim();
+  const canvas = document.getElementById('dev-canvas');
+  const stage = document.querySelector('.dev-preview-inner');
+  if (!canvas || !stage) return;
+  const ctx = canvas.getContext('2d');
+  const rgb = hexToRgb(color);
+  const tierIdx = TIER_ORDER.indexOf(tier);
+  const isBeyond = tierIdx >= 9, isHigh = tierIdx >= 7;
+  const orbitCount = isBeyond ? 4 : isHigh ? 3 : 2;
+  const ppo = isBeyond ? 22 : isHigh ? 16 : 10;
+  const sparkCount = isBeyond ? 60 : isHigh ? 38 : 20;
+  const speed = isBeyond ? 0.8 : isHigh ? 0.6 : 0.4;
+  const glowRadius = isBeyond ? 90 : isHigh ? 65 : 48;
+
+  const particles = [];
+  for (let o = 0; o < orbitCount; o++) {
+    const orbitRadius = 36 + o * 16;
+    const orbitSpeed = speed * (1 - o*0.12) * (o%2===0?1:-1);
+    for (let p = 0; p < ppo; p++) {
+      particles.push({ type:'orbit', angle:(p/ppo)*Math.PI*2, orbitRadius, orbitSpeed,
+        size: isBeyond ? 2.2-o*0.25 : 1.6-o*0.18, alpha:0.7+Math.random()*0.3, trailLen:isBeyond?8:5, trail:[] });
+    }
+  }
+  for (let i = 0; i < sparkCount; i++) {
+    particles.push({ type:'spark', x:(Math.random()-0.5)*140, y:(Math.random()-0.5)*70,
+      vx:(Math.random()-0.5)*0.4, vy:-(0.2+Math.random()*0.5), size:0.7+Math.random()*1.3,
+      alpha:0.3+Math.random()*0.4, life:Math.random(), maxLife:0.8+Math.random()*0.5 });
+  }
+
+  let t = 0;
+  function loop() {
+    const W = stage.offsetWidth, H = stage.offsetHeight || 110;
+    canvas.width = W; canvas.height = H;
+    const cx = W/2, cy = H/2;
+    ctx.clearRect(0,0,W,H);
+    t += 0.016;
+
+    for (let ri=0;ri<(isBeyond?4:isHigh?3:2);ri++) {
+      const pulse = Math.sin(t*1.8+ri*1.1)*0.15+0.85;
+      const rr = glowRadius * pulse * (0.55+ri*0.22);
+      const grad = ctx.createRadialGradient(cx,cy,rr*0.3,cx,cy,rr);
+      grad.addColorStop(0,`rgba(${rgb.r},${rgb.g},${rgb.b},${isBeyond?0.12:0.07})`);
+      grad.addColorStop(1,`rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+      ctx.beginPath(); ctx.arc(cx,cy,Math.max(0,rr),0,Math.PI*2); ctx.fillStyle=grad; ctx.fill();
+    }
+
+    particles.forEach(p => {
+      if (p.type==='orbit') {
+        p.angle += p.orbitSpeed * 0.035;
+        const px = cx + Math.cos(p.angle)*p.orbitRadius;
+        const py = cy + Math.sin(p.angle)*p.orbitRadius*0.45;
+        p.trail.push({x:px,y:py});
+        if (p.trail.length > p.trailLen) p.trail.shift();
+        p.trail.forEach((tp,ti) => {
+          ctx.beginPath(); ctx.arc(tp.x,tp.y,Math.max(0,p.size*(ti/p.trail.length)*0.75),0,Math.PI*2);
+          ctx.fillStyle=`rgba(${rgb.r},${rgb.g},${rgb.b},${(ti/p.trail.length)*p.alpha*0.45})`; ctx.fill();
+        });
+        ctx.beginPath(); ctx.arc(px,py,Math.max(0,p.size),0,Math.PI*2);
+        ctx.fillStyle=`rgba(${rgb.r},${rgb.g},${rgb.b},${p.alpha})`; ctx.fill();
+      } else {
+        p.x+=p.vx; p.y+=p.vy; p.life+=0.008;
+        const fade = Math.sin((p.life/p.maxLife)*Math.PI);
+        if (p.life>=p.maxLife) { p.x=(Math.random()-0.5)*120; p.y=(Math.random()-0.5)*60; p.life=0; p.vx=(Math.random()-0.5)*0.4; p.vy=-(0.2+Math.random()*0.5); }
+        ctx.beginPath(); ctx.arc(cx+p.x,cy+p.y,Math.max(0,p.size*fade),0,Math.PI*2);
+        ctx.fillStyle=`rgba(${rgb.r},${rgb.g},${rgb.b},${p.alpha*fade})`; ctx.fill();
+      }
+    });
+    stage.style.boxShadow = `0 0 ${isBeyond?55:isHigh?35:20}px rgba(${rgb.r},${rgb.g},${rgb.b},${isBeyond?0.35:isHigh?0.22:0.12})`;
+    devAnimFrame = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// Cycle through all auras automatically
+function devCycleAll() {
+  const btn = document.getElementById('dev-cycle-btn');
+  if (devCycleTimer) {
+    clearInterval(devCycleTimer);
+    devCycleTimer = null;
+    btn.textContent = '⟳ Cycle All';
+    btn.style.color = '';
+    return;
+  }
+  btn.textContent = '⏹ Stop Cycle';
+  btn.style.color = '#f43f5e';
+  devCycleIdx = 0;
+  function advance() {
+    if (devCycleIdx >= AURAS.length) devCycleIdx = 0;
+    const [tier, name, chance, color] = AURAS[devCycleIdx++];
+    devSelectAura(tier, name, chance, color);
+    // Scroll the chip into view
+    const chips = document.querySelectorAll('.dev-aura-chip');
+    chips.forEach(c => { if (c.textContent === name) c.scrollIntoView({block:'nearest'}); });
+  }
+  advance();
+  devCycleTimer = setInterval(advance, 1800);
+}
+
+// Dev panel lifecycle handled inside setPanel above
+
+</script>
+</body>
+</html>
