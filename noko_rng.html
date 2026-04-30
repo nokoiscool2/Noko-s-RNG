@@ -2745,7 +2745,11 @@ function triggerPrimordialAnim(ov, r, fontClass) {
 
   // Single fullscreen canvas — draws everything
   const cv = document.createElement('canvas');
+  cv.width = window.innerWidth;
+  cv.height = window.innerHeight;
   cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+  // Paint dark immediately so there's no white flash before first rAF fires
+  { const ic = cv.getContext('2d'); ic.fillStyle = '#020106'; ic.fillRect(0,0,cv.width,cv.height); }
   ov.appendChild(cv);
 
   // Name + title text overlay on top
@@ -2819,12 +2823,12 @@ function triggerPrimordialAnim(ov, r, fontClass) {
     { at: 19.0, fn: (W,H) => { spawnShock('#ffffff', W, H); } },
   ];
   let firedEvents = new Set();
+  const ctx = cv.getContext('2d');
 
   function loop() {
     const W = window.innerWidth, H = window.innerHeight;
-    cv.width = W; cv.height = H;
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const cx = W/2, cy = H/2;
-    const ctx = cv.getContext('2d');
 
     if (particles.length === 0) seedParticles(W, H);
 
@@ -2833,9 +2837,8 @@ function triggerPrimordialAnim(ov, r, fontClass) {
       if (!firedEvents.has(idx) && t >= ev.at) { firedEvents.add(idx); ev.fn(W, H); }
     });
 
-    // Background — deep void
-    const bgAlpha = Math.min(0.88, t * 0.6);
-    ctx.fillStyle = `rgba(2,1,10,${bgAlpha})`;
+    // Background — always opaque deep void (no white showing through)
+    ctx.fillStyle = 'rgb(2,1,10)';
     ctx.fillRect(0, 0, W, H);
 
     // Atmospheric glow at center
@@ -3117,7 +3120,11 @@ function triggerAbsoluteAnim(ov, r, fontClass) {
 
   // Single fullscreen canvas
   const cv = document.createElement('canvas');
+  cv.width = window.innerWidth;
+  cv.height = window.innerHeight;
   cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+  // Paint dark immediately
+  { const ic = cv.getContext('2d'); ic.fillStyle = '#010006'; ic.fillRect(0,0,cv.width,cv.height); }
   ov.appendChild(cv);
 
   // White flash overlay for the initial implosion moment
@@ -3207,6 +3214,7 @@ function triggerAbsoluteAnim(ov, r, fontClass) {
     { at: 48.0, fn: () => { spawnRing('#ffffff', 3); spawnRing(r.color, 2); } },
   ];
   let firedEvents = new Set();
+  const ctx = cv.getContext('2d');
 
   // Show name text at 12s
   setTimeout(() => textWrap.style.opacity = '1', 12000);
@@ -3214,9 +3222,8 @@ function triggerAbsoluteAnim(ov, r, fontClass) {
 
   function loop() {
     const W = window.innerWidth, H = window.innerHeight;
-    cv.width = W; cv.height = H;
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const cx = W/2, cy = H/2;
-    const ctx = cv.getContext('2d');
 
     // Fire events
     events.forEach((ev, idx) => {
@@ -3227,9 +3234,8 @@ function triggerAbsoluteAnim(ov, r, fontClass) {
     flash.style.opacity = flashOpacity.toString();
     flashOpacity = Math.max(0, flashOpacity - 0.06);
 
-    // Deep dark background
-    const bgAlpha = t < 0.5 ? 0 : Math.min(0.92, (t - 0.5) * 1.5);
-    ctx.fillStyle = `rgba(1,0,6,${bgAlpha})`;
+    // Deep dark background — always opaque from frame 1
+    ctx.fillStyle = `rgb(1,0,6)`;
     ctx.fillRect(0, 0, W, H);
 
     // Stars (fade in after t=5)
